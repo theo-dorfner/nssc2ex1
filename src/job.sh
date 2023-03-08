@@ -22,7 +22,7 @@
 module load pmi/pmix-x86_64     # [P]rocess [M]anagement [I]nterface (required by MPI-Implementation)
 module load mpi/openmpi-x86_64  # MPI implementation (including compiler-wrappers mpicc/mpic++)
 
-mpic++ -std=c++17 -O3 -Wall -pedantic -march=native -ffast-math main.cpp -o jacobiMPI
+mpic++ -std=c++17 -O3 -Wall -pedantic -march=native -ffast-math main.cpp -o jacobiSerial
 
 ## submitting jobs (on the allocated resources)
 
@@ -30,4 +30,4 @@ mpic++ -std=c++17 -O3 -Wall -pedantic -march=native -ffast-math main.cpp -o jaco
 
 resolution=32
 iterations=800
-srun --mpi=pmix ./jacobiMPI ${resolution} ${iterations}
+srun --mpi=pmix ./jacobiSerial ${resolution} ${iterations}

@@ -5,7 +5,7 @@
 
 #include "arguments.hpp"
 #include "solver.hpp"
- 
+
 int main(int argc, char **argv) {
 
   // parse command line arguments

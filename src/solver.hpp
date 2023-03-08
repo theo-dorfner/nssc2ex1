@@ -57,7 +57,7 @@ struct Stencil {
 enum Cell { UNKNOWN = 0, DIR = 1, NEU = 2, ROB = 0 };
 
 void PoissonJacobiStencil(size_t resolution, size_t iterations) {
-  
+
   size_t N = resolution;
   size_t NY = N;
   size_t NX = N;

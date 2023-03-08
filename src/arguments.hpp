@@ -7,7 +7,7 @@
 
 using namespace std;
 
-template<typename T>
+template <typename T>
 T convertTo(const int position, const T init, int argc, char *argv[]) {
   if (argc <= position) {
     std::cout
@@ -19,9 +19,9 @@ T convertTo(const int position, const T init, int argc, char *argv[]) {
   T arg;
   std::istringstream tmp(argv[position]);
   tmp >> arg ? (std::cout << "Conversion of argument " << position
-                             << " to 'int' successfull: " << arg)
-                : (std::cout << "Conversion of argument " << position
-                             << " to 'int' failed");
+                          << " to 'int' successfull: " << arg)
+             : (std::cout << "Conversion of argument " << position
+                          << " to 'int' failed");
   std::cout << std::endl;
   return arg;
 }

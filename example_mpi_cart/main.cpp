@@ -20,7 +20,6 @@ int main(int argc, char **argv) {
     std::cout << "total number of MPI processes=" << num_proc << ":"
               << std::endl;
 
-
   if (rank == 0)
     std::cout << "num_proc:" << num_proc << std::endl;
 
@@ -35,7 +34,6 @@ int main(int argc, char **argv) {
   if (rank == 0)
     std::printf("2d cart size=(%i,%i)\n", dims[0], dims[1]);
 
-
   std::array<int, 2> periods = {false, false};
   int reorder = false;
   MPI_Comm comm_2d;
@@ -49,9 +47,6 @@ int main(int argc, char **argv) {
   MPI_Cart_shift(comm_2d, 1, 1, &nb[DIR::W], &nb[DIR::E]);
   std::array<int, 2> coord = {-1, -1};
   MPI_Cart_coords(comm_2d, rank, ndims, std::data(coord));
-
-
-
 
   MPI_Barrier(MPI_COMM_WORLD);
 
@@ -71,7 +66,7 @@ int main(int argc, char **argv) {
 
   MPI_Gather(std::data(sendbuf), sendcount, mpi_charbuf, std::data(recvbuf),
              recvcount, mpi_charbuf, recvrank, comm_2d);
-             
+
   if (rank == recvrank)
     for (int n = 0; n < num_proc; ++n)
       std::cout << std::string_view(std::data(recvbuf) + n * CHARBUF_SIZE)
