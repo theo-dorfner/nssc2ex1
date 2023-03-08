@@ -143,7 +143,7 @@ required.
 
 **Notes:**
 
-- Your implementation should work for any positive integer supplied for NUMMPIPROC (e.g., 1,2,3,4,...) and also utilize this number of processes for the 2D decomposition. 
+- Your implementation should work for any positive integer supplied for `<dim>` (e.g., 1,2,3,4,...) and also utilize this number of processes for the 2D decomposition. 
 - If a the 2D composition is not possible with the supplied number of processes (i.e., a prime number), your program should resort to a 1D decomposition.
 
 ***
