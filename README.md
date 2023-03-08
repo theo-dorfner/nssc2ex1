@@ -8,7 +8,7 @@
 - The binaries should be callable with command line parameters as specified below.
 - Submit everything (Makefiles, submission scripts, sources, PDF with Plots/Discussion) as one zip-file.
 per task.
-- If you implement task3 it is sufficient if you submit only your final sources for `jacobiMPI` which works for both: 1D (task2) and 2D (task3) composition.
+- If you implement task3 it is sufficient if you submit only your final sources for `jacobiMPI` which works for both: 1D (task2) and 2D (task3) decomposition.
 
 - TUWEL-Course: https://tuwel.tuwien.ac.at/course/view.php?idnumber=360243-2023S
 
