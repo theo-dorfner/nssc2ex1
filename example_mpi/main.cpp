@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
     MPI_Barrier(MPI_COMM_WORLD);
 
     std::cout << "printing to stdout from rank=" << rank << "."<< std::endl;
-    std::cerr << "printing to stdout from rank=" << rank << "."<< std::endl;
+    std::cerr << "printing to stderr from rank=" << rank << "."<< std::endl;
 
     MPI_Finalize();
 

@@ -110,11 +110,11 @@ More specifically, you should
 
 - On your local machine, you can also launch MPI-runs using `mpirun`, e.g. for a Ubuntu system using OpenMPI
     ```bash
-    sudo apt-get build-essentials
+    sudo apt-get install build-essential
     sudo apt-get install openmpi-bin openmpi-common libopenmpi-dev
     mpic++ -std=c++17 -O3 -Wall -pedantic -march=native -ffast-math main.cpp -o jacobiMPI
-    mpirun -np=2 ./jacobiMPI 64 1000
-    mpirun -np=8 --oversubscribe ./jacobiMPI 64 1000
+    mpirun -np 2 ./jacobiMPI 64 1000
+    mpirun -np 8 --oversubscribe ./jacobiMPI 64 1000
     ```
 - The use of `MPI_Cart_create`, `MPI_Cart_coords`, and `MPI_ Cart_shift` for setup of the communication paths is recommended.
 - Your implementation should work for any positive integer supplied for `<nun_mpi_proc>` (e.g., 1,2,3,4,...) and also utilize this number of processes for the decomposition.

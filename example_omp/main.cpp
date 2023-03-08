@@ -9,7 +9,7 @@ int main() {
       #pragma omp critical
         {
           std::cout << "printing to stdout from tid=" << tid << "."<< std::endl;
-          std::cerr << "printing to stdout from tid=" << tid << "."<< std::endl;
+          std::cerr << "printing to stderr from tid=" << tid << "."<< std::endl;
         }
   }  
 
