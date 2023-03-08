@@ -6,8 +6,7 @@
 
 - Include the name of all actively collaborated group members in the submission documents.
 - The binaries should be callable with command line parameters as specified below.
-- Submit everything (Makefiles, submission scripts, sources, PDF with Plots/Discussion) as one zip-file.
-per task.
+- Submit everything (Makefiles, submission scripts, sources, PDF with Plots/Discussion) as one zip-file including top-level subfolders for each of the three tasks.
 - If you implement task3 it is sufficient if you submit only your final sources for `jacobiMPI` which works for both: 1D (task2) and 2D (task3) decomposition.
 
 - TUWEL-Course: https://tuwel.tuwien.ac.at/course/view.php?idnumber=360243-2023S
