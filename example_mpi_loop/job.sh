@@ -2,7 +2,7 @@
 
 ## job name
 
-#SBATCH --job-name=mpi
+#SBATCH --job-name=mpi_loop
 
 ## logfiles (stdout/stderr) %x=job-name %j=job-id
 

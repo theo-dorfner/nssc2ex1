@@ -83,9 +83,10 @@ Your task is to implement a one-dimensional decomposition using a ghost layer an
 Create a program which is callable like this (on our cluster): 
 
 ```bash
-srun --mpi=pmix --ntasks=<nun_mpi_proc> ./jacobiMPI <resolution> <iterations>
-# example call 
-mpirun -n 4 ./jacobiMPI 250 30
+mpirun -np <nun_mpi_proc> ./jacobiMPI <resolution> <iterations>
+# example call (your machine)
+mpirun -np 4 ./jacobiMPI 250 30
+# example call (iue cluster)
 srun --mpi=pmix --ntasks=4 ./jacobiMPI 250 30
 ```
 
@@ -118,19 +119,24 @@ More specifically, you should
     ```
 - The use of `MPI_Cart_create`, `MPI_Cart_coords`, and `MPI_ Cart_shift` for setup of the communication paths is recommended.
 - Your implementation should work for any positive integer supplied for `<nun_mpi_proc>` (e.g., 1,2,3,4,...) and also utilize this number of processes for the decomposition.
+- If you compile for a benchmark run, the following compiler arguments are recommended: `-O3 -Wall -pedantic -march=native -ffast-math`
+
 
 ## Task 3: Two-Dimensional Decomposition (3 points)
 Extend your program from Task 2 by implementing a two-dimensional decomposition using a ghost layer and
 MPI-communication to update the ghost layers. Create a program which is callable like this:
 ```bash
-mpirun -n NUMMPIPROC ./jacobiMPI DIM resolution iterations
-# example call
-mpirun -n 4 ./jacobiMPI 2D 125 200
+mpirun -np <nun_mpi_proc> ./jacobiMPI <dim> <resolution> <iterations>
+# example calls (your machine)
+mpirun -np 4 ./jacobiMPI 1D 250 30
+mpirun -np 4 ./jacobiMPI 2D 250 30
+# example calls (iue cluster)
+srun --mpi=pmix --ntasks=4 ./jacobiMPI 1D 250 30
+srun --mpi=pmix --ntasks=4 ./jacobiMPI 2D 250 30
 ```
 
-- the command line parameters have the same meaning as above in Task 2
-- the new parameter `DIM` has two valid values `1D` or `2D` and switches between one-dimensional and two-dimensional decomposition.
-
+- the command line parameters have the same meaning as above in Task 2.
+- the new parameter `<dim>` has two valid values `1D` or `2D` and switches between one-dimensional and two-dimensional decomposition.
 
 Ensure a correct implementation by comparing your results to a serial run. Benmarking on the cluster is **not**
 required.

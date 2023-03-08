@@ -15,6 +15,12 @@ int main(int argc, char **argv) {
 
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  if (rank == 0)
+    std::cout << "total number of MPI processes=" << num_proc << ":"
+              << std::endl;
+
+
   if (rank == 0)
     std::cout << "num_proc:" << num_proc << std::endl;
 
@@ -25,6 +31,11 @@ int main(int argc, char **argv) {
   int ndims = 2;
   std::array<int, 2> dims = {0, 0};
   MPI_Dims_create(num_proc, ndims, std::data(dims));
+
+  if (rank == 0)
+    std::printf("2d cart size=(%i,%i)\n", dims[0], dims[1]);
+
+
   std::array<int, 2> periods = {false, false};
   int reorder = false;
   MPI_Comm comm_2d;
@@ -39,9 +50,8 @@ int main(int argc, char **argv) {
   std::array<int, 2> coord = {-1, -1};
   MPI_Cart_coords(comm_2d, rank, ndims, std::data(coord));
 
-  if (rank == 0)
-    std::cout << "total number of MPI processes=" << num_proc << ":"
-              << std::endl;
+
+
 
   MPI_Barrier(MPI_COMM_WORLD);
 
