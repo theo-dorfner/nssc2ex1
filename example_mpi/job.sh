@@ -13,16 +13,16 @@
 
 #SBATCH --partition=nssc    # partition for 360.242 and 360.242
 #SBATCH --nodes=1           # request one node
-#SBATCH --ntasks=40          # request eight processes on this node
+#SBATCH --ntasks=40         # request eight processes on this node
 #SBATCH --cpus-per-task=1   # request one cpu for each of these processes
-#SBATCH --time=0:20         # set time limit to 20 seconds
+#SBATCH --time=00:00:20     # set time limit to 20 seconds
 
 ## load modules and compilation (still on the login node)
 
 module load pmi/pmix-x86_64     # [P]rocess [M]anagement [I]nterface (required by MPI-Implementation)
 module load mpi/openmpi-x86_64  # MPI implementation (including compiler-wrappers mpicc/mpic++)
 
-mpic++ main.cpp -o main
+mpic++ -std=c++17 main.cpp -o main
 
 ## submitting jobs (on the allocated resources)
 

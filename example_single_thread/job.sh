@@ -15,11 +15,11 @@
 #SBATCH --nodes=1           # request one node
 #SBATCH --ntasks=1          # request one process on this node
 #SBATCH --cpus-per-task=1   # request one cpu for this process
-#SBATCH --time=0:10         # set time limit to 10 seconds
+#SBATCH --time=00:00:20     # set time limit to 20 seconds
 
 ## load modules and compilation (still on the login node)
 
-g++ main.cpp -o main
+g++ -std=c++17 main.cpp -o main
 
 ## submitting jobs (on the allocated resources)
 

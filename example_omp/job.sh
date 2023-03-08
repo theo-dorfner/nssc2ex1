@@ -15,7 +15,7 @@
 #SBATCH --nodes=1           # request one node
 #SBATCH --ntasks=1          # request one process on this node
 #SBATCH --cpus-per-task=8   # request eight cpus for this process
-#SBATCH --time=0:10         # set time limit to 10 seconds
+#SBATCH --time=00:00:20     # set time limit to 20 seconds
 
 ## load modules and compilation (still on the login node)
 
