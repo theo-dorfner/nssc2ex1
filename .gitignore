@@ -2,3 +2,4 @@ main
 *.log
 jacobiMPI
 a.out
+build
