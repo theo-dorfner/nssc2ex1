@@ -1,5 +1,3 @@
-main
-*.log
-jacobiMPI
-a.out
 build
+jacobiMPI
+
