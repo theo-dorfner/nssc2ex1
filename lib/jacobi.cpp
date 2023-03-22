@@ -1,7 +1,9 @@
 #include <iostream>
 #include <vector>
 
-std::vector <double> jacobi(std::vector <std::vector <double>> A,std::vector <double> b,std::vector <double> x,int dim){
+using matrixType = std::vector <std::vector <double>>;
+
+std::vector <double> jacobi(matrixType A,std::vector <double> b,std::vector <double> x,int dim){
     std::vector <double> nX(dim);
     for(int i=0; i<dim; i++){
         double sum{0};
@@ -13,7 +15,7 @@ std::vector <double> jacobi(std::vector <std::vector <double>> A,std::vector <do
     }
     return nX;
 }
-void printMatrix(std::vector <std::vector <double>> matrix,int N){
+void printMatrix(matrixType matrix,int N){
     for(int i=0; i < N; i++){
         for(int j=0; j < N; j++){
             std::cout << matrix[i][j] << " ";
@@ -25,7 +27,7 @@ void printVector(std::vector <double> vector){
     for(auto& elem:vector) std::cout << elem << " ";
     std::cout << std::endl;
 }
-
+/*
 int main(){
     int nN = 2;
     std::vector <std::vector <double>> ol(nN,std::vector <double> (nN,2));
@@ -39,5 +41,5 @@ int main(){
     }
     return 0;
 }
-
+*/
 
