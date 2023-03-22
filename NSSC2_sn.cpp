@@ -15,21 +15,7 @@ What I need from above:
   - falls es ein root rank gibt den sonst nehm ich 0
 */
 
-double NormL2(const std::vector<long double> &v) {
-  double norm = 0;
-  for (const auto &value : v) {
-    norm += value * value;
-  }
-  return sqrt(norm);
-}
-
-double NormInf(const std::vector<long double> &v) {
-  double max = std::numeric_limits<double>::lowest();
-  for (const auto &value : v) {
-    max = std::fabs(value) > max ? std::fabs(value) : max;
-  }
-  return max;
-}
+#include "functions_sn.h"
 
 int main(){
 
@@ -45,24 +31,12 @@ int main(){
   int NX = N, NY = N;
 
   // Initializations
-  std::vector <long double> residual_elements(size, N);
-  std::vector <long double> error_elemets(size, 0);
-  double North, South, East, West;
-
-  // Loop to calculate Residual and Error for NX*NY Matrix
-  for(int i = 0; i < NX*NY; ++i){
-    
-    North = u[i-NX]; East  = u[i+1];
-    South = u[i+NX]; West  = u[i-1];
-  
-    if(   i   % NX == 0     ){ West = 0.0;          // if no leftborder neighbour
-    }if((i+1) % NX == 0     ){ East = 0.0;          // if no rightborder neighbour
-    }if(  i   < NX          ){ North = 0.0;         // if no topborder neighbour
-    }if(  i   > NX*(NY-1)-1 ){ South = 0.0;         // if no bottomborder neighbour
-    }
-    residual_elements[i] =  u[i]*Center - East - West - South - North - rhs[i]*h*h;
-    error_elemets[i] = std::abs(u[i]-solution[i]);
-  }
+  std::vector <long double> residual_elements(NX*NY, 0);
+  std::vector <long double> error_elemets(NX*NY, 0);
+ 
+ // Calculate Residual and Error
+  residual_elements = Residual_Calc(NX, NY, u, rhs);
+  error_elemets = Error_Calc(NX, NY, u, solution);
 
   // das hoff ich bekomme ich auch von oben 
   double mean_runtime_it; // Summe von allen Runtimes per Itteration divided by Itteration
