@@ -2,7 +2,49 @@
 
 ## 1. Describe the advantages/disadvantages of a two-dimensional decomposition (compared to a one-dimensional decomposition).
 
-more parallelization, symmetric matrices not rectangle maybe better?
+The scaling behavior between 1D decomposition 2D decomposition is significantly different, as the cutting surface of the 2D subdomains is smaller than in the 1D case. But this will not affect the speedup much for small numbers of CPU cores but for large numbers. 
+
+Example: 
+
+take 250 resolution, 100 timesteps: 
+t_s = time of communication of stecil
+t_c = time of communication to other cell 
+--> lets assume both take 1 time unit
+
+T_p = parallel runtime 
+T_s = 250^2 * t_s * 100 = runtime--> speedup: S = T_s/T_p 
+
+1D Decomposition:
+- 5 MPI-processes --> T_p = (250*200*t_s + 250 * 2 * t_c) * 100 --> S = 4.80
+- 25 MPI-processes --> S = 20.83
+- 125 MPI-processes --> S = 62.5
+- 250 MPI processes --> S = 83.33
+
+2D Decomposition:
+- 5 MPI-processes --> S = 4.97
+- 25 MPI-processes --> S = 24.38
+- 125 MPI-processes --> S = 110.96
+- 250 MPI processes --> S = 199.53
+
+25 Processes:
+ _
+| | 
+| |                       ____
+| |   --> 2x 250         |    |  --> 4x 25
+| |       = 500          |____|      = 1000
+| |
+|_|
+
+125 Processes:
+ _
+| | 
+| |                       ____
+| |  --> 2x 250          |    |  --> 4x 2 
+| |      = 500           |____|      = 4
+| |
+|_|
+
+https://alexander.vondrous.de/?p=7
 
 ## 2. Discuss if the decomposition of the domain changes the order of computations performed during a single Jacobi iteration (i.e., if you expect a numerically identical result after each iteration, or not).
 
