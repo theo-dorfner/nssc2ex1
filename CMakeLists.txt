@@ -1,3 +1,4 @@
+# complie mpic++ -std=c++17 -O3 -Wall -pedantic -march=native -ffast-math main.cpp -o jacobiMPI
 cmake_minimum_required(VERSION 3.12)
 
 project(mpiJacobi
