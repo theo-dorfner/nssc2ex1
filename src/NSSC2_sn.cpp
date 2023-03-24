@@ -15,7 +15,7 @@ What I need from above:
   - falls es ein root rank gibt den sonst nehm ich 0
 */
 
-#include "functions_sn.h"
+#include "../include/functions_sn.h"
 
 int main(){
 
