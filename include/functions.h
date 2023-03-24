@@ -4,7 +4,8 @@
 
 using namespace std;
 
-vector<int> UnknownsPerProc(vector<int>PPP, int precs, int proc) //this function declares how big the A, u and f are in the "Blocks"
+vector<int> UnknownsPerProc(vector<int>PPP, int precs, int proc)
+//this function declares how big the A, u and f are in the "Blocks"
 {
     int A[proc];
     int min_prec = floor(precs / proc);
@@ -27,7 +28,8 @@ vector<int> UnknownsPerProc(vector<int>PPP, int precs, int proc) //this function
     return PPP;
 }
 
-vector<int> UPPtoYBegin(vector<int>UPP, int prec, int proc) //transforms f.e. (12,12,6,6) to (1, 3, 5, 6); helpfunction for b0 initialization
+vector<int> UPPtoYBegin(vector<int>UPP, int prec, int proc)
+//transforms f.e. (12,12,6,6) to (1, 3, 5, 6); helpfunction for b0 initialization
 {
     vector<int>Y_begin;
     int N = UPP.size();
@@ -59,6 +61,7 @@ double BC(double X)
 }
 
 vector<double>Initialize_b0(vector<double>b, vector<int>Y_begin, int prec, double h, int my_rank, int proc)
+//this function initializes b0
 {
     vector<double>X;
     vector<double>Y;
@@ -88,25 +91,15 @@ vector<double>Initialize_b0(vector<double>b, vector<int>Y_begin, int prec, doubl
     return b;
 }
 
-
-vector<double>Initialize_u0(vector<double>u, int N)
-{
-    for(int i=0; i<N; i++)
-    {
-        u.push_back(0);
-    }
-
-    return u;
-}
-
-
 double H(int res)
+//this function calculates h
 {
       double h = 1.0 / (res - 1);
       return h;
 }
 
 vector<double>Initialize_A0(vector<double>A, int N, int width, double h)
+//this function initialize A0
 {
     double alpha = 4 + 4 * M_PI * M_PI * h * h;
     vector<double> stencil {-1, alpha,-1};
@@ -159,38 +152,8 @@ vector<double>Initialize_A0(vector<double>A, int N, int width, double h)
 }
 
 
-vector<double>Initialize_v_random(vector<double>b, int N)
-{
-    random_device dev; //random number generator from 1 to 100
-    mt19937 rng(dev());
-    uniform_int_distribution<mt19937::result_type> dist100(1,100);
-
-    for(int i=0; i<N; i++)
-    {
-        b.push_back(dist100(rng));
-    }
-
-    return b;
-}
-
-vector<double>Initialize_A_random(vector<double>A, int N)
-{
-    random_device dev; //random number generator from 1 to 100
-    mt19937 rng(dev());
-    uniform_int_distribution<mt19937::result_type> dist100(1,100);
-
-    for(int i=0; i<N; i++)
-    {
-        for(int j=0; j<N; j++)
-        {
-            A.push_back(dist100(rng));
-        }
-    }
-
-    return A;
-}
-
 void vector_printer(vector<double>b)
+//function prints vector<double>
 {
     for(int i=0; i<b.size(); i++)
     {
@@ -200,6 +163,7 @@ void vector_printer(vector<double>b)
 }
 
 void vector_printer_int(vector<int>b)
+//function prints vector<int>
 {
     for(int i=0; i<b.size(); i++)
     {
@@ -209,6 +173,7 @@ void vector_printer_int(vector<int>b)
 }
 
 void matrix_printer(vector<double>A, int N)
+//function prints vector<double> as a matrix
 {
   for(int j=0; j<N; j++)
   {
@@ -220,9 +185,3 @@ void matrix_printer(vector<double>A, int N)
   }
   cout<<endl;
 }
-
-
-/*
-mpiCC meister1d.cpp -o meister
-mpirun -n 6 meister1d 5 12
-*/
