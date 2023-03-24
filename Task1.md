@@ -14,7 +14,22 @@ more parallelization, symmetric matrices not rectangle maybe better?
 
 ## 4. Assume a ghost layer with width W=1 (this is what you will later implement) and discuss if a data exchange between parts of the domain which are "diagonal neighbors" is required assuming a "5-point star-shaped stencil".
 
+nicht direkt glaube ich, wenn bei 2d indirekt die Werte am jeweiligen eck durch horizontal und dann vertical bekommt diagonal element einen wert kommuniziert. Dieser würden den Wert aber eigentlich nicht brauchen. 
 
+![](task_description/images/unitsquare_decomposition_1D_2D.png) 
 
 ## 5. How big is the sum of all L2 caches for 2 nodes of the IUE-cluster 
 
+L2 (Level 2) cache is slower than the L1 cache but bigger in size. Where an L1 cache may measure in kilobytes, modern L2 memory caches measure in megabytes.
+https://www.makeuseof.com/tag/what-is-cpu-cache/
+
+Regular compute node (10x): 
+2x INTEL Xeon Gold 6248, 2.5GHz, 20C/40T
+Fat compute node (2x): 
+2x INTEL Xeon Gold 6248, 2.5GHz, 20C/40T
+https://www.iue.tuwien.ac.at/research/computing-infrastructure/
+
+--> ein INTEL Xeon Gold 6248, 2.5GHz hat L2 cache von 16.0 MB
+https://www.cpubenchmark.net/cpu.php?cpu=Intel+Xeon+Gold+6248+%40+2.50GHz&id=3517
+
+Also for 2 nodes und je 2 INTEL = 4*16 = 64MB
