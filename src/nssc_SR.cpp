@@ -1,7 +1,8 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <iostream>
-#include "functions.h"
+#include <cmath>
+#include "../include/functions.h"
 #include <vector>
 
 using namespace std;
@@ -24,7 +25,8 @@ int main(int argc, char* argv[]) {
 
     int resolution = atoi(argv[1]);
     int precs = resolution - 2;
-    int iterations = atoi(argv[2]);
+    //int iterations = atoi(argv[2]);
+
 
     MPI_Comm_size(MPI_COMM_WORLD, &proc);
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
@@ -46,19 +48,33 @@ int main(int argc, char* argv[]) {
 
     //IMPLEMENT FUNCTION(PROOF IF ENOUGH PRECS FOR PROCS)
 
-    vector<double>b(UPP[my_rank],0);
+    vector<double>b;
     vector<double>u(UPP[my_rank],0);
     vector<double>A(UPP[my_rank]*UPP[my_rank],0); //this is a Matrix --> initialize with A[j*N+i]
     //double* A[UPP[my_rank]]; //matrix; initialize with A[j*N + i]
 
     //u = Initialize_u0(u, UPP[my_rank]); //for "normal" application
     //b = Initialize_b0(b, UPP[my_rank]);
-    double h = H(precs);
+    double h = H(resolution);
 
     A = Initialize_A0(A, UPP[my_rank], precs, h);
 
-    //vector_printer(A);
-    if(my_rank == 0) matrix_printer(A, UPP[my_rank]);
+    vector<int>y_begin;
+    y_begin = UPPtoYBegin(UPP, precs, proc);
+
+    vector<double>Y_vals;
+    b = Initialize_b0(b, y_begin, precs, h, my_rank, proc);
+
+    //vector_printer_int(y_begin);
+
+    cout<< "rank: " << my_rank << endl;
+    vector_printer(b);
+    cout << endl;
+
+
+    //vector_printer(b);
+    //matrix_printer(A, UPP[my_rank]);
+
 
 
 
