@@ -30,8 +30,8 @@ T_s = 250^2 * t_s * 100 = runtime--> speedup: S = T_s/T_p
  _
 | | 
 | |                       ____
-| |   --> 2x 250         |    |  --> 4x 25
-| |       = 500          |____|      = 1000
+| |--> 2x 250 = 500      |    |  --> 4x 25 = 1000
+| |                      |____|      
 | |
 |_|
 
@@ -39,8 +39,8 @@ T_s = 250^2 * t_s * 100 = runtime--> speedup: S = T_s/T_p
  _
 | | 
 | |                       ____
-| |  --> 2x 250          |    |  --> 4x 2 
-| |      = 500           |____|      = 4
+| | --> 2x 250 = 500     |    |  --> 4x 2 = 4
+| |                      |____|
 | |
 |_|
 
@@ -48,7 +48,8 @@ https://alexander.vondrous.de/?p=7
 
 ## 2. Discuss if the decomposition of the domain changes the order of computations performed during a single Jacobi iteration (i.e., if you expect a numerically identical result after each iteration, or not).
 
-
+yes, the same?
+have the same neigbouring values?
 
 ## 3. A generalization of the ghost layer approach would be to set the width of the ghost layer that is exchanged as a parameter W of the decomposition. This allows to perform W independent iterations before a communication of the ghost layers has to happen. Comment in which situation (w.r.t the available bandwidth or latency between MPI-processes) multiple independent iterations are potentially advantageous.
 
