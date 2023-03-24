@@ -29,6 +29,7 @@ int main(){
     MPI_Request requestSouth;
     MPI_Status statusNorth;
     MPI_Status statusSouth;
+    int startNorth = (NY-1)*NX;
 
 
     // collect neighbour IDs
@@ -41,13 +42,13 @@ int main(){
         auto start = std::chrono::steady_clock::now(); // start runtime timing
 
         // generate outgoing ghost layers
-        for(int i=0; i<NX;++i) ghostOutNorth[i] = solutionU[(counter-1)%2][(NY-1)*NX+i];
+        for(int i=0; i<NX;++i) ghostOutNorth[i] = solutionU[(counter-1)%2][startNorth + i];
         for(int i=0; i<NX;++i) ghostOutSouth[i] = solutionU[(counter-1)%2][i];
 
         // initiate non-blocking receive
         //MPI_Irecv( buf, count, datatype, source, tag, comm, [OUT] &request_handle);
-        MPI_Irecv( &ghostInNorth, NY, MPI_Double, idNorth, counter, comm, &requestNorth);
-        MPI_Irecv( &ghostInSouth, NY, MPI_Double, idSouth, counter, comm, &requestSouth);
+        MPI_Irecv( &ghostInNorth, NY, MPI_Double, idNorth, counter, comm1D, &requestNorth);
+        MPI_Irecv( &ghostInSouth, NY, MPI_Double, idSouth, counter, comm1D, &requestSouth);
 
         // initiate send
         MPI_Send(&ghostOutNorth, NX,MPI_Double, idNorth, counter, MPI_Comm_cart);
@@ -59,7 +60,7 @@ int main(){
 
         // --- start jacobi-calculation
         // resolve neighbouring arrays into fullSize index position
-        for(int i=0; i<NX;++i) g[(NY-1)*NX+i] = (+1) * ghostInNorth[i]; //need to clarify +1/-1 here
+        for(int i=0; i<NX;++i) g[startNorth + i] = (+1) * ghostInNorth[i]; //need to clarify +1/-1 here
         for(int i=0; i<NX;++i) g[i] = (+1) * ghostInSouth[i];
 
         // actually calculate jacobi
