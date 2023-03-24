@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
 
 
     //variable declaration
-    int fullSize = NX * NY;
+    const int fullSize = NX * NY;
     double solutionU[2][fullSize]{0};
     double ghostValues[fullSize];
     double ghostInNorth[NX], ghostInSouth[NX]; // are dimensional allocations correct here?
@@ -125,12 +125,12 @@ int main(int argc, char* argv[]) {
 
         // initiate non-blocking receive
         //MPI_Irecv( buf, count, datatype, source, tag, comm, [OUT] &request_handle);
-        MPI_Irecv( &ghostInNorth, NY, MPI_Double, idNorth, counter, comm1D, &requestNorth);
-        MPI_Irecv( &ghostInSouth, NY, MPI_Double, idSouth, counter, comm1D, &requestSouth);
+        MPI_Irecv( &ghostInNorth, NY, MPI_DOUBLE, idNorth, counter, comm1D, &requestNorth);
+        MPI_Irecv( &ghostInSouth, NY, MPI_DOUBLE, idSouth, counter, comm1D, &requestSouth);
 
         // initiate send
-        MPI_Send(&ghostOutNorth, NX,MPI_Double, idNorth, counter, comm1D);
-        MPI_Send(&ghostOutSouth, NX,MPI_Double, idSouth, counter, comm1D);
+        MPI_Send(&ghostOutNorth, NX,MPI_DOUBLE, idNorth, counter, comm1D);
+        MPI_Send(&ghostOutSouth, NX,MPI_DOUBLE, idSouth, counter, comm1D);
 
         // wait for receive
         MPI_Wait(&requestNorth,&statusNorth);
@@ -207,7 +207,7 @@ int main(int argc, char* argv[]) {
     int process;  // Anzahl der thread
 
     // Combining all calculations to compute Residual und Error
-    int root = 0
+    int root = 0;
     if(myrank == root){
 
         // initializing buffer befor gather/sum

@@ -9,6 +9,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(mpiJacobi src/mpiJacobi.cpp lib/jacobi.cpp)
+add_executable(mpiJacobi src/jacobiMPI.cpp)
 
 target_include_directories(mpiJacobi PRIVATE include)
