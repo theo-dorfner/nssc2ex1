@@ -66,6 +66,8 @@ if updates less frequent --> results can differ?
 
 As we are working with a "5-point star-shaped stencil" the diagonal elements are never needet for an itteration of the boundary layers. Additionally if the communication to the ghost layers, as implied by the task description, includes all elements in one row/collumn over the 
 
+bild einfügen
+
 nicht direkt glaube ich, wenn bei 2d indirekt die Werte am jeweiligen eck durch horizontal und dann vertical bekommt diagonal element einen wert kommuniziert. Dieser würden den Wert aber eigentlich nicht brauchen. 
 
 
