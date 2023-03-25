@@ -88,19 +88,18 @@ int main(int argc, char* argv[]) {
 
 
 
-
 // PART THEO
-    //transition
-    int &NX = ncols;
-    int &NY = nrows;
+    // we need a proper definition for these things
+    int NX = precs;
+    int NY = UPP[my_rank] / precs;
 
 
     //variable declaration
     const int fullSize = NX * NY;
-    double solutionU[2][fullSize]{0};
-    double ghostValues[fullSize];
-    double ghostInNorth[NX], ghostInSouth[NX]; // are dimensional allocations correct here?
-    double ghostOutNorth[NX], ghostOutSouth[NX];
+    std::vector<std::vector <double>> solutionU(2, std::vector<double>(fullSize,0));
+    std::vector<double> ghostValues(fullSize,0);
+    std::vector<double> ghostInNorth(NX,0), ghostInSouth(NX,0); // are dimensional allocations correct here?
+    std::vector<double> ghostOutNorth(NX,0), ghostOutSouth(NX,0);
     int idNorth, idSouth, procID;
     std::chrono::duration<double> procRuntime{0};
     MPI_Request requestNorth;
@@ -146,9 +145,9 @@ int main(int argc, char* argv[]) {
             double sum{0};
             for(int j=0; j<fullSize; j++) {
                 if(i==j) continue;
-                sum += A[i][j] * solutionU[(counter+1)%2][i];
+                sum += A[i+NX*j] * solutionU[(counter+1)%2][i];
             }
-            solutionU[counter%2][i] = (b[i] + ghostValues[i] - sum)/A[i][i];
+            solutionU[counter%2][i] = (b[i] + ghostValues[i] - sum)/A[i+NX*i];
         }
 
         //calc runtime
@@ -158,8 +157,8 @@ int main(int argc, char* argv[]) {
     //if(counter == iterations) std::cout << "problem with counter not being interations" << std::endl;
 
     // prepare output
-    double finalSolution[fullSize];
-    double rhs[fullSize];
+    std::vector<double> finalSolution(fullSize);
+    std::vector<double> rhs(fullSize);
     for(int i=0; i < fullSize; ++i){
         finalSolution[i] = solutionU[iterations % 2][i];
         rhs[i] = b[i] + ghostValues[i];
@@ -169,12 +168,16 @@ int main(int argc, char* argv[]) {
 
 
     /* things being passed on from my part:
+
     fullSize = NX*NY (this is the length of solution and rhs vector)
 
     finalSolution (of length fullSize) [afaik this is also the u that they want for everything else]
     rhs (this is b + ghostValues)
     meanRuntime
 
+    the way NX and NY are defined:
+    int NX = precs;
+    int NY = UPP[my_rank] / precs;
 
 
 
