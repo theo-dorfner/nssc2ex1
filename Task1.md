@@ -1,3 +1,10 @@
+
+MPI = 1,2,5,10,20,30,40
+
+Theo: 125, 250
+Stefan: 1000
+Steffi: 2000
+
 # Task 1
 
 ## 1. Describe the advantages/disadvantages of a two-dimensional decomposition (compared to a one-dimensional decomposition).
@@ -48,8 +55,8 @@ https://alexander.vondrous.de/?p=7
 
 ## 2. Discuss if the decomposition of the domain changes the order of computations performed during a single Jacobi iteration (i.e., if you expect a numerically identical result after each iteration, or not).
 
-yes, the same?
-have the same neigbouring values?
+yes? have the same neigbouring values if update of ghost layers happens every itteration
+if updates less frequent --> results can differ?
 
 ## 3. A generalization of the ghost layer approach would be to set the width of the ghost layer that is exchanged as a parameter W of the decomposition. This allows to perform W independent iterations before a communication of the ghost layers has to happen. Comment in which situation (w.r.t the available bandwidth or latency between MPI-processes) multiple independent iterations are potentially advantageous.
 
@@ -57,9 +64,12 @@ have the same neigbouring values?
 
 ## 4. Assume a ghost layer with width W=1 (this is what you will later implement) and discuss if a data exchange between parts of the domain which are "diagonal neighbors" is required assuming a "5-point star-shaped stencil".
 
+As we are working with a "5-point star-shaped stencil" the diagonal elements are never needet for an itteration of the boundary layers. Additionally if the communication to the ghost layers, as implied by the task description, includes all elements in one row/collumn over the 
+
+bild einfügen
+
 nicht direkt glaube ich, wenn bei 2d indirekt die Werte am jeweiligen eck durch horizontal und dann vertical bekommt diagonal element einen wert kommuniziert. Dieser würden den Wert aber eigentlich nicht brauchen. 
 
-![](task_description/images/unitsquare_decomposition_1D_2D.png) 
 
 ## 5. How big is the sum of all L2 caches for 2 nodes of the IUE-cluster 
 

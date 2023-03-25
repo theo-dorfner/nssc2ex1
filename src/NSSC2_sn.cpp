@@ -12,7 +12,6 @@ What I need from above:
   - solution, rhs, u
   - mean_runtime_it (mittlere runtime per Itteration)
   - anzahl der process 
-  - falls es ein root rank gibt den sonst nehm ich 0
 */
 
 #include "../include/functions_sn.h"
