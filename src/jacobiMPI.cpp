@@ -60,7 +60,6 @@ int main(int argc, char* argv[]) {
     //this is now done multiple times, but don't know how else to do it!
     std::vector<int>UPP;
     UPP = UnknownsPerProc(UPP, precs, proc); //calculates how big dimensions of arrays are for each rank!
-    int NY = UPP[my_rank] / precs;
     //Check if resolution high enough for PROCS
     if(precs < proc)
     {
@@ -106,7 +105,7 @@ int main(int argc, char* argv[]) {
 
 
 // PART THEO
-    // we need a proper definition for these things
+    // definition of matrix sice if unknown variables
     int NX = precs;
     int NY = UPP[my_rank] / precs;
 
@@ -203,57 +202,60 @@ int main(int argc, char* argv[]) {
 
 // PART STEFFI
 
-    int N = 4;
-    int size = N*N; // sure that this shouldn't be NX*NY?
-
-    std::vector <long double> u(size, 1);                  // initialize solution arrays
-    std::vector <long double> rhs(size, 3);                // intialise right hand side (size elements with initial value N)
-    std::vector <double> solution(size, N);                // initialise solution
-
-    double h = 1 / (1.0*N - 1);                            // nicht durch int dividieren --> N * 1.0
-    double Center = 4 + h*h * 4*M_PI*M_PI;
-    int NX = N, NY = N;
+    std::vector <double> solution(fullSize, 0);                // initialise correct solution
+    solution = Initialize_up(solution, y_begin, precs, h, my_rank, proc);
 
     // Initializations
-    std::vector <long double> residual_elements(NX*NY, 0);
-    std::vector <long double> error_elemets(NX*NY, 0);
+    std::vector <double> residual_elements(NX*NY, 0);
+    std::vector <double> error_elemets(NX*NY, 0);
 
     // Calculate Residual and Error
-    residual_elements = Residual_Calc(NX, NY, u, rhs);
-    error_elemets = Error_Calc(NX, NY, u, solution);
+    residual_elements = Residual_Calc(NX, NY, finalSolution, rhs);
+    error_elemets = Error_Calc(NX, NY, finalSolution, solution);
 
-    // das hoff ich bekomme ich auch von oben
-    double mean_runtime_it; // Summe von allen Runtimes per Itteration divided by Itteration
-    int process;  // Anzahl der thread
+    // Claculating Error and Residual per Process
+    auto residualNorm_proc = NormL2_2(residual_elements);
+    auto residualMax_proc = NormInf(residual_elements);
+    auto errorNorm_proc = NormL2_2(error_elemets);
+    auto errorMax_proc = NormInf(error_elemets);
+
 
     // Combining all calculations to compute Residual und Error
     int root = 0;
-    if(myrank == root){
+    if(my_rank == root){
 
         // initializing buffer befor gather/sum
-        std::vector <long double> residual(size of all u);
-        std::vector <long double> error(size of all u);
+        double residualNorm_2(proc);
+        std::vector <double> residualMax_vec(proc);
+        double errorNorm_2(proc);
+        std::vector <double> errorMax_vec(proc);
         double runtime_sum;
 
-        // gather all elements to combine
-        MPI_Gather( &residual_elements.data(), residual_elements.size(), MPI_LONG_DOUBLE,
-                    residual.data(), residual_elements.size(), MPI_LONG_DOUBLE,
+        // gather all error and residual elements to combine and sum up 
+        MPI_Reduce( &residualNorm_proc, &residualNorm_2, 1, MPI_DOUBLE,
+                    MPI_SUM, root, MPI_COMM_WORLD);
+
+        MPI_Gather( &residualMax_proc, 1, MPI_DOUBLE,
+                    residualMax_vec.data(), 1, MPI_DOUBLE,
                     root, MPI_COMM_WORLD);
 
-        MPI_Gather( &error_elemets.data(), error_elemets.size(), MPI_LONG_DOUBLE,
-                    error.data(), error_elemets.size(), MPI_LONG_DOUBLE,
+        MPI_Reduce( &errorNorm_proc, &errorNorm_2, 1, MPI_DOUBLE,
+                    MPI_SUM, root, MPI_COMM_WORLD);
+
+        MPI_Gather( &errorMax_proc, 1, MPI_DOUBLE,
+                    errorMax_vec.data(), 1, MPI_DOUBLE,
                     root, MPI_COMM_WORLD);
 
         // sum up the mean-runtime and calculate mean
-        MPI_Reduce( &mean_runtime_it, runtime_sum, 1, MPI_DOUBLE,
+        MPI_Reduce( &meanRuntime, &runtime_sum, 1, MPI_DOUBLE,
                     MPI_SUM, root, MPI_COMM_WORLD);
-        double mean_runtime = runtime_sum/process;
+        double mean_runtime = runtime_sum/proc;
 
         // Calculating NormL2 and Infinite Norm of Residual and Error
-        auto residualNorm = NormL2(residual);
-        auto residualMax = NormInf(residual);
-        auto errorNorm = NormL2(error);
-        auto errorMax = NormInf(error);
+        auto residualNorm = sqrt(residualNorm_2);
+        auto residualMax = NormInf(residualMax_vec);
+        auto errorNorm = sqrt(errorNorm_2);
+        auto errorMax = NormInf(errorMax_vec);
 
         // Output the result
         std::cout << std::scientific << "|residual|=" << residualNorm << std::endl;
@@ -267,4 +269,3 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-//this is a test commit
