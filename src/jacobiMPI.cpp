@@ -31,13 +31,18 @@ int main(int argc, char* argv[]) {
 
     MPI_Init(&argc, &argv);
 
+    //A. MPI_Cart creation
+
+    //A.1. Reading in values
     int resolution = atoi(argv[1]);
     int precs = resolution - 2;
     int iterations = atoi(argv[2]);
 
-
+    //A.2. Reading out proc and rank; create cart and check if successful
     MPI_Comm_size(MPI_COMM_WORLD, &proc);
+    //saves number of processes on "proc"
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    //saves current rank on "my_rank"
 
     dims[0] = 0;
 
@@ -47,38 +52,50 @@ int main(int argc, char* argv[]) {
     reorder = 1;
     ierr = 0;
     ierr = MPI_Cart_create(MPI_COMM_WORLD, ndims, dims, wrap_around, reorder, &comm1D);
+    //creating MPI_cart with one dimension
 
     if(ierr != 0) printf("ERROR[%i] creating CART\n", ierr);
+    //returns error if cart creation wasn't successful
 
     //this is now done multiple times, but don't know how else to do it!
     std::vector<int>UPP;
     UPP = UnknownsPerProc(UPP, precs, proc); //calculates how big dimensions of arrays are for each rank!
+    int NY = UPP[my_rank] / precs;
+    //Check if resolution high enough for PROCS
+    if(precs < proc)
+    {
+        if(my_rank == 0) cout << "Please choose a resolution that for N procs is at least N+2" << endl;
+        return 0;
+    }
 
-    //IMPLEMENT FUNCTION(PROOF IF ENOUGH PRECS FOR PROCS)
+    //B.1. Definition of Matrix A, vector u and vector b; size of arrays corresponds to UPP of the rank;
+    vector<double>b;
+    vector<double>u(UPP[my_rank],0);
+    //starting value for vector u is all zero
+    vector<double>A(UPP[my_rank]*UPP[my_rank],0);
+    //this is a Matrix --> initialize with A[j*N+i]
 
-    std::vector<double>b;
-    std::vector<double>u(UPP[my_rank],0);
-    std::vector<double>A(UPP[my_rank]*UPP[my_rank],0); //this is a Matrix --> initialize with A[j*N+i]
-    //double* A[UPP[my_rank]]; //matrix; initialize with A[j*N + i]
 
-    //u = Initialize_u0(u, UPP[my_rank]); //for "normal" application
-    //b = Initialize_b0(b, UPP[my_rank]);
+    //B.2. Helpfunctions for the Initialization of A and b;
     double h = H(resolution);
-
-    A = Initialize_A0(A, UPP[my_rank], precs, h);
-
-    std::vector<int>y_begin;
+    //calculating h
+    vector<int>y_begin;
+    //vector for the initialization of b
     y_begin = UPPtoYBegin(UPP, precs, proc);
 
-    std::vector<double>Y_vals;
+    //B.3. Initialization of A and b;
+    A = Initialize_A0(A, UPP[my_rank], precs, h);
     b = Initialize_b0(b, y_begin, precs, h, my_rank, proc);
 
-    //vector_printer_int(y_begin);
-
-    std::cout<< "rank: " << my_rank << std::endl;
+    /*
+    cout << "Hello, my rank is " << my_rank << " and the number of unknowns are " << UPP[my_rank] << endl << endl;
+    cout << "This is my vector b: " << endl;
     vector_printer(b);
-    std::cout << std::endl;
-
+    cout <<"And this is my matrix A: " << endl;
+    matrix_printer(A, UPP[my_rank]);
+    cout<<"Have a nice day :-) from rank "<<my_rank<<endl;
+    cout<<"--------------------------------------------"<<endl<<endl;
+    */
 
 
 
@@ -200,12 +217,12 @@ int main(int argc, char* argv[]) {
     // Initializations
     std::vector <long double> residual_elements(NX*NY, 0);
     std::vector <long double> error_elemets(NX*NY, 0);
-    
+
     // Calculate Residual and Error
     residual_elements = Residual_Calc(NX, NY, u, rhs);
     error_elemets = Error_Calc(NX, NY, u, solution);
 
-    // das hoff ich bekomme ich auch von oben 
+    // das hoff ich bekomme ich auch von oben
     double mean_runtime_it; // Summe von allen Runtimes per Itteration divided by Itteration
     int process;  // Anzahl der thread
 
@@ -228,16 +245,16 @@ int main(int argc, char* argv[]) {
                     root, MPI_COMM_WORLD);
 
         // sum up the mean-runtime and calculate mean
-        MPI_Reduce( &mean_runtime_it, runtime_sum, 1, MPI_DOUBLE, 
+        MPI_Reduce( &mean_runtime_it, runtime_sum, 1, MPI_DOUBLE,
                     MPI_SUM, root, MPI_COMM_WORLD);
-        double mean_runtime = runtime_sum/process;     
-        
-        // Calculating NormL2 and Infinite Norm of Residual and Error 
+        double mean_runtime = runtime_sum/process;
+
+        // Calculating NormL2 and Infinite Norm of Residual and Error
         auto residualNorm = NormL2(residual);
         auto residualMax = NormInf(residual);
         auto errorNorm = NormL2(error);
         auto errorMax = NormInf(error);
-    
+
         // Output the result
         std::cout << std::scientific << "|residual|=" << residualNorm << std::endl;
         std::cout << std::scientific << "|residualMax|=" << residualMax << std::endl;
