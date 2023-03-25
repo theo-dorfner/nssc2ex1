@@ -17,6 +17,9 @@ using matrixType = std::vector <std::vector <double>>;
 using Clock = std::chrono::system_clock;
 
 int main(int argc, char* argv[]) {
+
+    MPI_Init(&argc, &argv);
+
     int ndims = 1;
     //int size; - had to comment out because it's redeclared later on
     int proc;
@@ -28,8 +31,6 @@ int main(int argc, char* argv[]) {
     int my_cart_rank;
     int ierr;
     int nrows, ncols;
-
-    MPI_Init(&argc, &argv);
 
     //A. MPI_Cart creation
 
