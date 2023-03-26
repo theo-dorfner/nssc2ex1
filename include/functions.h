@@ -55,7 +55,7 @@ double f(double X, double Y)
 
 double BC(double X)
 {
-    return sin(2 * M_PI * X) * sinh(2*M_PI);
+    return sin(2 * M_PI * X) * sinh(2 * M_PI);
 }
 
 vector<double>Initialize_b0(vector<double>b, vector<int>Y_begin, int prec, double h, int my_rank, int proc)
