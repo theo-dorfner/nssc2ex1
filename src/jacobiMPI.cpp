@@ -168,8 +168,9 @@ int main(int argc, char* argv[]) {
             double sum{0};
             for(int j=0; j<fullSize; j++) {
                 if(i==j) continue;
-                sum += A[i+fullSize*j] * solutionU[(counter+1)%2][i];
+                sum += A[j+fullSize*i] * solutionU[(counter+1)%2][j];
             }
+            //std::cout << ghostValues[i] << std::endl;
             solutionU[counter%2][i] = (b[i] + ghostValues[i] - sum)/A[i+fullSize*i];
         }
 
