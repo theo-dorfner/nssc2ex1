@@ -122,7 +122,7 @@ int main(int argc, char* argv[]) {
     MPI_Status statusNorth;
     MPI_Status statusSouth;
     //int* collector[2] = {&idNorth, &idSouth};
-    int startNorth = (NY-1)*NX;
+    int startSouth = (NY-1)*NX;
 
     //MPI_Cart_coords(comm1D, my_rank, 2, &coords);
     //std::cout << procID << " " << coords << std::endl;
@@ -142,8 +142,8 @@ int main(int argc, char* argv[]) {
         auto start = std::chrono::steady_clock::now(); // start runtime timing
 
         // generate outgoing ghost layers
-        for(int i=0; i<NX;++i) ghostOutNorth[i] = solutionU[(counter+1)%2][startNorth + i];
-        for(int i=0; i<NX;++i) ghostOutSouth[i] = solutionU[(counter+1)%2][i];
+        for(int i=0; i<NX;++i) ghostOutSouth[i] = solutionU[(counter+1)%2][startSouth + i];
+        for(int i=0; i<NX;++i) ghostOutNorth[i] = solutionU[(counter+1)%2][i];
 
         // initiate non-blocking receive
         //MPI_Irecv( buf, count, datatype, source, tag, comm, [OUT] &request_handle);
@@ -160,10 +160,11 @@ int main(int argc, char* argv[]) {
 
         // --- start jacobi-calculation
         // resolve neighbouring arrays into fullSize index position
-        for(int i=0; i<NX;++i) ghostValues[startNorth + i] = (+1) * ghostInNorth[i]; //need to clarify +1/-1 here
-        for(int i=0; i<NX;++i) ghostValues[i] = (+1) * ghostInSouth[i];
+        for(int i=0; i<NX;++i) ghostValues[startSouth + i] = (+1) * ghostInSouth[i]; //need to clarify +1/-1 here
+        for(int i=0; i<NX;++i) ghostValues[i] = (+1) * ghostInNorth[i];
 
         // actually calculate jacobi
+        // das sind andere i,j als in den grid-koordinaten (diese hier sind nur intern für berechnungen der Matrix)
         for(int i=0; i<fullSize; i++){
             double sum{0};
             for(int j=0; j<fullSize; j++) {
@@ -186,7 +187,7 @@ int main(int argc, char* argv[]) {
     for(int i=0; i < fullSize; ++i){
         finalSolution[i] = solutionU[iterations % 2][i];
         //if(my_rank == 0) std::cout << finalSolution[i] << std::endl;
-        rhs[i] = b[i] + ghostValues[i];
+        rhs[i] = b[i] ;//+ ghostValues[i];
     }
     // calculate mean runtime in seconds
     double meanRuntime = procRuntime.count()/(std::pow(10,9)*iterations*1.0);
