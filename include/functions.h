@@ -6,13 +6,13 @@ using namespace std;
 
 vector<int> UnknownsPerProc(vector<int>PPP, int precs, int proc) //this function declares how big the A, u and f are in the "Blocks"
 {
-    int A[proc];
+    vector<int>A;
     int min_prec = floor(precs / proc);
     int rest = precs % proc;
 
     for(int i=0; i<proc; i++)
     {
-      A[i] = min_prec;
+      A.push_back(min_prec);
     }
 
     for(int j=0; j<rest; j++)
@@ -73,7 +73,7 @@ vector<double>Initialize_b0(vector<double>b, vector<int>Y_begin, int prec, doubl
     }
 
 
-    for(int k=0; k<X.size(); k++)
+    for(int k=0; k< static_cast<int>(X.size()); k++)
     {
         if(abs(Y[k] - (1-h)) < 1e-5)
         {
@@ -119,7 +119,7 @@ vector<double>Initialize_up(vector<double>b, vector<int>Y_begin, int prec, doubl
     }
 
 
-    for(int k=0; k<X.size(); k++)
+    for(int k=0; k< static_cast<int>(X.size()); k++)
     {
         b.push_back(u_p(X[k], Y[k])); 
     }
@@ -220,7 +220,7 @@ vector<double>Initialize_A_random(vector<double>A, int N)
 
 void vector_printer(vector<double>b)
 {
-    for(int i=0; i<b.size(); i++)
+    for(int i=0; i<static_cast<int>(b.size()); i++)
     {
         cout << b[i] << endl;
     }
@@ -229,7 +229,7 @@ void vector_printer(vector<double>b)
 
 void vector_printer_int(vector<int>b)
 {
-    for(int i=0; i<b.size(); i++)
+    for(int i=0; i<static_cast<int>(b.size()); i++)
     {
         cout << b[i] << endl;
     }

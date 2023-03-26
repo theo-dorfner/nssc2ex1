@@ -22,15 +22,13 @@ int main(int argc, char* argv[]) {
 
     int ndims = 1;
     //int size; - had to comment out because it's redeclared later on
-    int proc;
+    int proc = 0;
     int my_rank;
     MPI_Comm comm1D;
-    int dims[ndims], coord;
-    int wrap_around[ndims];
+    int dims[1];
+    int wrap_around[1];
     int reorder;
-    int my_cart_rank;
     int ierr;
-    int nrows, ncols;
 
     //A. MPI_Cart creation
 
@@ -203,7 +201,7 @@ int main(int argc, char* argv[]) {
 
 // PART STEFFI
 
-    std::vector <double> solution(fullSize, 0);                // initialise correct solution
+    std::vector <double> solution;                // initialise correct solution
     solution = Initialize_up(solution, y_begin, precs, h, my_rank, proc);
 
     // Initializations
@@ -215,48 +213,44 @@ int main(int argc, char* argv[]) {
     error_elemets = Error_Calc(NX, NY, finalSolution, solution);
 
     // Claculating Error and Residual per Process
-    auto residualNorm_proc = NormL2_2(residual_elements);
-    auto residualMax_proc = NormInf(residual_elements);
-    auto errorNorm_proc = NormL2_2(error_elemets);
-    auto errorMax_proc = NormInf(error_elemets);
+    double residualNorm_proc = NormL2_2(residual_elements);
+    double residualMax_proc = NormInf(residual_elements);
+    double errorNorm_proc = NormL2_2(error_elemets);
+    double errorMax_proc = NormInf(error_elemets);
 
 
-    // Combining all calculations to compute Residual und Error
+    // Initialize for combining
     int root = 0;
-    if(my_rank == root){
+    double residualNorm_2;
+    double residualMax;
+    //std::vector <double> residualMax_vec(proc, 0);
+    double errorNorm_2;
+    double errorMax;
+    //std::vector <double> errorMax_vec(proc, 0);
+    double runtime_sum;
 
-        // initializing buffer befor gather/sum
-        double residualNorm_2(proc);
-        std::vector <double> residualMax_vec(proc);
-        double errorNorm_2(proc);
-        std::vector <double> errorMax_vec(proc);
-        double runtime_sum;
+    // gather all error and residual and runtime to combine and sum up 
+    MPI_Reduce( &residualNorm_proc, &residualNorm_2, 1, MPI_DOUBLE,
+                MPI_SUM, 0, MPI_COMM_WORLD);
 
-        // gather all error and residual elements to combine and sum up 
-        MPI_Reduce( &residualNorm_proc, &residualNorm_2, 1, MPI_DOUBLE,
-                    MPI_SUM, root, MPI_COMM_WORLD);
+    MPI_Reduce( &residualMax_proc, &residualMax, 1, MPI_DOUBLE,
+                MPI_MAX, 0, MPI_COMM_WORLD);
 
-        MPI_Gather( &residualMax_proc, 1, MPI_DOUBLE,
-                    residualMax_vec.data(), 1, MPI_DOUBLE,
-                    root, MPI_COMM_WORLD);
+    MPI_Reduce( &errorNorm_proc, &errorNorm_2, 1, MPI_DOUBLE,
+                MPI_SUM, root, MPI_COMM_WORLD);
+    
+    MPI_Reduce( &errorMax_proc, &errorMax, 1, MPI_DOUBLE,
+                MPI_MAX, 0, MPI_COMM_WORLD);
 
-        MPI_Reduce( &errorNorm_proc, &errorNorm_2, 1, MPI_DOUBLE,
-                    MPI_SUM, root, MPI_COMM_WORLD);
-
-        MPI_Gather( &errorMax_proc, 1, MPI_DOUBLE,
-                    errorMax_vec.data(), 1, MPI_DOUBLE,
-                    root, MPI_COMM_WORLD);
-
-        // sum up the mean-runtime and calculate mean
-        MPI_Reduce( &meanRuntime, &runtime_sum, 1, MPI_DOUBLE,
-                    MPI_SUM, root, MPI_COMM_WORLD);
-        double mean_runtime = runtime_sum/proc;
+    MPI_Reduce( &meanRuntime, &runtime_sum, 1, MPI_DOUBLE,
+                MPI_SUM, root, MPI_COMM_WORLD);
+        
+    if(my_rank == 0){
 
         // Calculating NormL2 and Infinite Norm of Residual and Error
+        double mean_runtime = runtime_sum/proc;
         auto residualNorm = sqrt(residualNorm_2);
-        auto residualMax = NormInf(residualMax_vec);
         auto errorNorm = sqrt(errorNorm_2);
-        auto errorMax = NormInf(errorMax_vec);
 
         // Output the result
         std::cout << std::scientific << "|residual|=" << residualNorm << std::endl;
@@ -264,6 +258,7 @@ int main(int argc, char* argv[]) {
         std::cout << std::scientific << "|error|=" << errorNorm << std::endl;
         std::cout << std::scientific << "|errorMax|=" << errorMax << std::endl;
         std::cout << std::scientific << "average runtime per iteration = " << mean_runtime << std::endl;
+    
     }
 
     MPI_Finalize();
