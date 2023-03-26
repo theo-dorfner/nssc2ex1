@@ -24,7 +24,7 @@ std::vector <double> Residual_Calc( int NX, int NY,
       }if(  i   < NX          ){ North = 0.0;         // if no topborder neighbour
       }if(  i   > NX*(NY-1)-1 ){ South = 0.0;         // if no bottomborder neighbour
       }
-      residual_elements[i] =  finalSolution[i]*Center - East - West - South - North - rhs[i]*h*h;
+      residual_elements[i] =  finalSolution[i]*Center - East - West - South - North - rhs[i];
     }
     return residual_elements;
 
