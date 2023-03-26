@@ -22,15 +22,13 @@ int main(int argc, char* argv[]) {
 
     int ndims = 1;
     //int size; - had to comment out because it's redeclared later on
-    int proc;
+    int proc = 0;
     int my_rank;
     MPI_Comm comm1D;
-    int dims[ndims], coord;
-    int wrap_around[ndims];
+    int dims[1];
+    int wrap_around[1];
     int reorder;
-    int my_cart_rank;
     int ierr;
-    int nrows, ncols;
 
     //A. MPI_Cart creation
 
@@ -75,7 +73,6 @@ int main(int argc, char* argv[]) {
     vector<double>A(UPP[my_rank]*UPP[my_rank],0);
     //this is a Matrix --> initialize with A[j*N+i]
 
-
     //B.2. Helpfunctions for the Initialization of A and b;
     double h = H(resolution);
     //calculating h
@@ -87,16 +84,17 @@ int main(int argc, char* argv[]) {
     A = Initialize_A0(A, UPP[my_rank], precs, h);
     b = Initialize_b0(b, y_begin, precs, h, my_rank, proc);
 
+    //matrix_printer(A, UPP[my_rank]);
+
     /*
     cout << "Hello, my rank is " << my_rank << " and the number of unknowns are " << UPP[my_rank] << endl << endl;
     cout << "This is my vector b: " << endl;
     vector_printer(b);
     cout <<"And this is my matrix A: " << endl;
-    matrix_printer(A, UPP[my_rank]);
+    
     cout<<"Have a nice day :-) from rank "<<my_rank<<endl;
     cout<<"--------------------------------------------"<<endl<<endl;
     */
-
 
 
 
@@ -117,36 +115,44 @@ int main(int argc, char* argv[]) {
     std::vector<double> ghostValues(fullSize,0);
     std::vector<double> ghostInNorth(NX,0), ghostInSouth(NX,0); // are dimensional allocations correct here?
     std::vector<double> ghostOutNorth(NX,0), ghostOutSouth(NX,0);
-    int idNorth, idSouth, procID;
+    int idNorth, idSouth, procID{my_rank};
     std::chrono::duration<double> procRuntime{0};
     MPI_Request requestNorth;
     MPI_Request requestSouth;
     MPI_Status statusNorth;
     MPI_Status statusSouth;
+    //int* collector[2] = {&idNorth, &idSouth};
     int startNorth = (NY-1)*NX;
 
-
+    //MPI_Cart_coords(comm1D, my_rank, 2, &coords);
+    //std::cout << procID << " " << coords << std::endl;
+    
     // collect neighbour IDs
     //int MPI_Cart_shift(MPI_Comm comm_cart, int direction, int disp, int *rank_source, int *rank_dest)
     MPI_Cart_shift(comm1D, 1, -1, &procID, &idNorth); //vertical - north
     MPI_Cart_shift(comm1D, 1, +1, &procID, &idSouth); //vertical - south
+
+    //for(auto &elem : collector)if(elem < 0)elem = &MPI_PROC_NULL;
+
+    //std::cout << "on " << my_rank << " going north is " << idNorth << std::endl;
+    //std::cout << "on " << my_rank << " going south is " << idSouth << std::endl;
 
     // start iterations
     for(int counter = 0; counter < iterations; ++counter){
         auto start = std::chrono::steady_clock::now(); // start runtime timing
 
         // generate outgoing ghost layers
-        for(int i=0; i<NX;++i) ghostOutNorth[i] = solutionU[(counter-1)%2][startNorth + i];
-        for(int i=0; i<NX;++i) ghostOutSouth[i] = solutionU[(counter-1)%2][i];
+        for(int i=0; i<NX;++i) ghostOutNorth[i] = solutionU[(counter+1)%2][startNorth + i];
+        for(int i=0; i<NX;++i) ghostOutSouth[i] = solutionU[(counter+1)%2][i];
 
         // initiate non-blocking receive
         //MPI_Irecv( buf, count, datatype, source, tag, comm, [OUT] &request_handle);
-        MPI_Irecv( &ghostInNorth, NY, MPI_DOUBLE, idNorth, counter, comm1D, &requestNorth);
-        MPI_Irecv( &ghostInSouth, NY, MPI_DOUBLE, idSouth, counter, comm1D, &requestSouth);
+        MPI_Irecv( &ghostInNorth[0], NX, MPI_DOUBLE, idNorth, counter, comm1D, &requestNorth);
+        MPI_Irecv( &ghostInSouth[0], NX, MPI_DOUBLE, idSouth, counter, comm1D, &requestSouth);
 
         // initiate send
-        MPI_Send(&ghostOutNorth, NX,MPI_DOUBLE, idNorth, counter, comm1D);
-        MPI_Send(&ghostOutSouth, NX,MPI_DOUBLE, idSouth, counter, comm1D);
+        MPI_Send(&ghostOutNorth[0], NX,MPI_DOUBLE, idNorth, counter, comm1D);
+        MPI_Send(&ghostOutSouth[0], NX,MPI_DOUBLE, idSouth, counter, comm1D);
 
         // wait for receive
         MPI_Wait(&requestNorth,&statusNorth);
@@ -162,9 +168,9 @@ int main(int argc, char* argv[]) {
             double sum{0};
             for(int j=0; j<fullSize; j++) {
                 if(i==j) continue;
-                sum += A[i+NX*j] * solutionU[(counter+1)%2][i];
+                sum += A[i+fullSize*j] * solutionU[(counter+1)%2][i];
             }
-            solutionU[counter%2][i] = (b[i] + ghostValues[i] - sum)/A[i+NX*i];
+            solutionU[counter%2][i] = (b[i] + ghostValues[i] - sum)/A[i+fullSize*i];
         }
 
         //calc runtime
@@ -178,6 +184,7 @@ int main(int argc, char* argv[]) {
     std::vector<double> rhs(fullSize);
     for(int i=0; i < fullSize; ++i){
         finalSolution[i] = solutionU[iterations % 2][i];
+        //if(my_rank == 0) std::cout << finalSolution[i] << std::endl;
         rhs[i] = b[i] + ghostValues[i];
     }
     // calculate mean runtime in seconds
@@ -203,7 +210,7 @@ int main(int argc, char* argv[]) {
 
 // PART STEFFI
 
-    std::vector <double> solution(fullSize, 0);                // initialise correct solution
+    std::vector <double> solution;                // initialise correct solution
     solution = Initialize_up(solution, y_begin, precs, h, my_rank, proc);
 
     // Initializations
@@ -215,48 +222,44 @@ int main(int argc, char* argv[]) {
     error_elemets = Error_Calc(NX, NY, finalSolution, solution);
 
     // Claculating Error and Residual per Process
-    auto residualNorm_proc = NormL2_2(residual_elements);
-    auto residualMax_proc = NormInf(residual_elements);
-    auto errorNorm_proc = NormL2_2(error_elemets);
-    auto errorMax_proc = NormInf(error_elemets);
+    double residualNorm_proc = NormL2_2(residual_elements);
+    double residualMax_proc = NormInf(residual_elements);
+    double errorNorm_proc = NormL2_2(error_elemets);
+    double errorMax_proc = NormInf(error_elemets);
 
 
-    // Combining all calculations to compute Residual und Error
+    // Initialize for combining
     int root = 0;
-    if(my_rank == root){
+    double residualNorm_2;
+    double residualMax;
+    //std::vector <double> residualMax_vec(proc, 0);
+    double errorNorm_2;
+    double errorMax;
+    //std::vector <double> errorMax_vec(proc, 0);
+    double runtime_sum;
 
-        // initializing buffer befor gather/sum
-        double residualNorm_2(proc);
-        std::vector <double> residualMax_vec(proc);
-        double errorNorm_2(proc);
-        std::vector <double> errorMax_vec(proc);
-        double runtime_sum;
+    // gather all error and residual and runtime to combine and sum up 
+    MPI_Reduce( &residualNorm_proc, &residualNorm_2, 1, MPI_DOUBLE,
+                MPI_SUM, 0, MPI_COMM_WORLD);
 
-        // gather all error and residual elements to combine and sum up 
-        MPI_Reduce( &residualNorm_proc, &residualNorm_2, 1, MPI_DOUBLE,
-                    MPI_SUM, root, MPI_COMM_WORLD);
+    MPI_Reduce( &residualMax_proc, &residualMax, 1, MPI_DOUBLE,
+                MPI_MAX, 0, MPI_COMM_WORLD);
 
-        MPI_Gather( &residualMax_proc, 1, MPI_DOUBLE,
-                    residualMax_vec.data(), 1, MPI_DOUBLE,
-                    root, MPI_COMM_WORLD);
+    MPI_Reduce( &errorNorm_proc, &errorNorm_2, 1, MPI_DOUBLE,
+                MPI_SUM, root, MPI_COMM_WORLD);
+    
+    MPI_Reduce( &errorMax_proc, &errorMax, 1, MPI_DOUBLE,
+                MPI_MAX, 0, MPI_COMM_WORLD);
 
-        MPI_Reduce( &errorNorm_proc, &errorNorm_2, 1, MPI_DOUBLE,
-                    MPI_SUM, root, MPI_COMM_WORLD);
-
-        MPI_Gather( &errorMax_proc, 1, MPI_DOUBLE,
-                    errorMax_vec.data(), 1, MPI_DOUBLE,
-                    root, MPI_COMM_WORLD);
-
-        // sum up the mean-runtime and calculate mean
-        MPI_Reduce( &meanRuntime, &runtime_sum, 1, MPI_DOUBLE,
-                    MPI_SUM, root, MPI_COMM_WORLD);
-        double mean_runtime = runtime_sum/proc;
+    MPI_Reduce( &meanRuntime, &runtime_sum, 1, MPI_DOUBLE,
+                MPI_SUM, root, MPI_COMM_WORLD);
+        
+    if(my_rank == 0){
 
         // Calculating NormL2 and Infinite Norm of Residual and Error
+        double mean_runtime = runtime_sum/proc;
         auto residualNorm = sqrt(residualNorm_2);
-        auto residualMax = NormInf(residualMax_vec);
         auto errorNorm = sqrt(errorNorm_2);
-        auto errorMax = NormInf(errorMax_vec);
 
         // Output the result
         std::cout << std::scientific << "|residual|=" << residualNorm << std::endl;
@@ -264,6 +267,7 @@ int main(int argc, char* argv[]) {
         std::cout << std::scientific << "|error|=" << errorNorm << std::endl;
         std::cout << std::scientific << "|errorMax|=" << errorMax << std::endl;
         std::cout << std::scientific << "average runtime per iteration = " << mean_runtime << std::endl;
+    
     }
 
     MPI_Finalize();
