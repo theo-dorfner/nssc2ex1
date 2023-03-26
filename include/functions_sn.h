@@ -5,13 +5,13 @@
 #include <vector>
 
 
-std::vector <double> Residual_Calc( int NX, int NY,
+std::vector <double> Residual_Calc( int NX, int NY, int resolution,
     std::vector <double> &finalSolution, std::vector <double> &rhs)
 {
 
     std::vector <double> residual_elements(NX*NY, 0);      // Initializations
     double North, South, East, West;
-    double h = 1 / (1.0*NX - 1);                            // nicht durch int dividieren --> N * 1.0
+    double h = 1.0 / (resolution - 1);                            // nicht durch int dividieren --> N * 1.0
     double Center = 4 + h*h * 4*M_PI*M_PI;
 
     for(int i = 0; i < NX*NY; ++i)                    // Loop to calculate Residual

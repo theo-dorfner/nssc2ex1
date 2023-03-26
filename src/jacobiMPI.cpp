@@ -21,7 +21,6 @@ int main(int argc, char* argv[]) {
     MPI_Init(&argc, &argv);
 
     int ndims = 1;
-    //int size; - had to comment out because it's redeclared later on
     int proc = 0;
     int my_rank;
     MPI_Comm comm1D;
@@ -67,10 +66,10 @@ int main(int argc, char* argv[]) {
     }
 
     //B.1. Definition of Matrix A, vector u and vector b; size of arrays corresponds to UPP of the rank;
-    vector<double>b;
-    vector<double>u(UPP[my_rank],0);
+    std::vector<double>b;
+    std::vector<double>u(UPP[my_rank],0);
     //starting value for vector u is all zero
-    vector<double>A(UPP[my_rank]*UPP[my_rank],0);
+    std::vector<double>A(UPP[my_rank]*UPP[my_rank],0);
     //this is a Matrix --> initialize with A[j*N+i]
 
     //B.2. Helpfunctions for the Initialization of A and b;
@@ -220,7 +219,7 @@ int main(int argc, char* argv[]) {
     std::vector <double> error_elemets(NX*NY, 0);
 
     // Calculate Residual and Error
-    residual_elements = Residual_Calc(NX, NY, finalSolution, rhs);
+    residual_elements = Residual_Calc(NX, NY, resolution, finalSolution, rhs);
     error_elemets = Error_Calc(NX, NY, finalSolution, solution);
 
     // Claculating Error and Residual per Process
