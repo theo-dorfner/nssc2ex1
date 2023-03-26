@@ -61,14 +61,12 @@ if updates less frequent --> results can differ?
 ## 3. A generalization of the ghost layer approach would be to set the width of the ghost layer that is exchanged as a parameter W of the decomposition. This allows to perform W independent iterations before a communication of the ghost layers has to happen. Comment in which situation (w.r.t the available bandwidth or latency between MPI-processes) multiple independent iterations are potentially advantageous.
 
 
-
+/n
 ## 4. Assume a ghost layer with width W=1 (this is what you will later implement) and discuss if a data exchange between parts of the domain which are "diagonal neighbors" is required assuming a "5-point star-shaped stencil".
 
-As we are working with a "5-point star-shaped stencil" the diagonal elements are never needet for an itteration of the boundary layers. Additionally if the communication to the ghost layers, as implied by the task description, includes all elements in one row/collumn over the 
+As we are working with a "5-point star-shaped stencil" the diagonal elements are never needet for an itteration of the boundary layers. Only the direct neighbors in North, South, West, East direction are needed. Additionally if the communication to the ghost layers, as implied by the task description and the figure below, includes all elements in one row/collumn, it manages to exchange data with the "diagonal neighbors" aswell in two steps. 
 
-bild einfügen
-
-nicht direkt glaube ich, wenn bei 2d indirekt die Werte am jeweiligen eck durch horizontal und dann vertical bekommt diagonal element einen wert kommuniziert. Dieser würden den Wert aber eigentlich nicht brauchen. 
+![Alt-Text](Task1.png)
 
 
 ## 5. How big is the sum of all L2 caches for 2 nodes of the IUE-cluster 
