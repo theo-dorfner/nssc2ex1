@@ -168,7 +168,7 @@ vector<double>Initialize_A0(vector<double>A, int N, int width, double h)
     {
         for(int i=1; i<N; i++) 
         {
-            if(i%Nx == 0)
+            if(i%width == 0)
             {
                 A[i*N + i - 1] = 0;
                 A[(i-1)*N + i] = 0;
@@ -177,18 +177,18 @@ vector<double>Initialize_A0(vector<double>A, int N, int width, double h)
         
         for(int j = 0; j < N; j++)
         {
-            if(j < Nx)
+            if(j < width)
             {
                 A[j*N + j + Nx] = -1;
             }
-            else if(j >= Nx && j < N-Nx)
+            else if(j >= width && j < N-Nx)
             {
-                A[j*N + j + Nx] = -1;
-                A[j*N + j - Nx] = -1;
+                A[j*N + j + width] = -1;
+                A[j*N + j - width] = -1;
             }  
-            else if(j >= N-Nx)
+            else if(j >= N-width)
             {
-                A[j*N + j - Nx] = -1;
+                A[j*N + j - width] = -1;
             }
         }
     }
