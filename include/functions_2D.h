@@ -239,11 +239,11 @@ vector<double>Initialize_b0(vector<double>b, int x_coord, int y_coord, vector<in
     {
         if(abs(Y[k] - (1-h)) < 1e-5)
         {
-            b.push_back(f(X[k], Y[k]) + BC(X[k]));   //u_p including the BC
+            b.push_back(f(X[k], Y[k])*h*h + BC(X[k]));   //u_p including the BC
         }
         else
         {
-            b.push_back(f(X[k], Y[k])); //only u_p without BC
+            b.push_back(f(X[k], Y[k])*h*h); //only u_p without BC
         }
     }
         
