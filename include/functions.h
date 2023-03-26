@@ -179,9 +179,9 @@ vector<double>Initialize_A0(vector<double>A, int N, int width, double h)
         {
             if(j < width)
             {
-                A[j*N + j + Nx] = -1;
+                A[j*N + j + width] = -1;
             }
-            else if(j >= width && j < N-Nx)
+            else if(j >= width && j < N-width)
             {
                 A[j*N + j + width] = -1;
                 A[j*N + j - width] = -1;
