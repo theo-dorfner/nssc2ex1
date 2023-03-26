@@ -7,13 +7,13 @@ using namespace std;
 vector<int> UnknownsPerProc(vector<int>PPP, int precs, int proc)
 //this function declares how big the A, u and f are in the "Blocks"
 {
-    int A[proc];
+    vector<int>A;
     int min_prec = floor(precs / proc);
     int rest = precs % proc;
 
     for(int i=0; i<proc; i++)
     {
-      A[i] = min_prec;
+      A.push_back(min_prec);
     }
 
     for(int j=0; j<rest; j++)
@@ -28,8 +28,7 @@ vector<int> UnknownsPerProc(vector<int>PPP, int precs, int proc)
     return PPP;
 }
 
-vector<int> UPPtoYBegin(vector<int>UPP, int prec, int proc)
-//transforms f.e. (12,12,6,6) to (1, 3, 5, 6); helpfunction for b0 initialization
+vector<int> UPPtoYBegin(vector<int>UPP, int prec, int proc) //transforms f.e. (12,12,6,6) to (1, 3, 5, 6, ...); helpfunction for b0 initialization
 {
     vector<int>Y_begin;
     int N = UPP.size();
@@ -76,7 +75,7 @@ vector<double>Initialize_b0(vector<double>b, vector<int>Y_begin, int prec, doubl
     }
 
 
-    for(int k=0; k<X.size(); k++)
+    for(int k=0; k< static_cast<int>(X.size()); k++)
     {
         if(abs(Y[k] - (1-h)) < 1e-5)
         {
@@ -90,6 +89,46 @@ vector<double>Initialize_b0(vector<double>b, vector<int>Y_begin, int prec, doubl
 
     return b;
 }
+
+
+vector<double>Initialize_u0(vector<double>u, int N)
+{
+    for(int i=0; i<N; i++)
+    {
+        u.push_back(0);
+    }
+
+    return u;
+}
+
+double u_p(double X, double Y)
+{
+    return sin(2 * M_PI * X) * sinh(2 * M_PI * Y);
+} 
+
+vector<double>Initialize_up(vector<double>b, vector<int>Y_begin, int prec, double h, int my_rank, int proc)
+{
+    vector<double>X;
+    vector<double>Y;
+
+    for(int j=Y_begin[my_rank]; j<Y_begin[my_rank+1]; j++) //die Y-Koordinate lauft werte bis zum naechsten rank durch
+    {
+        for(int i=1; i<prec+1; i++)
+        {
+            X.push_back(i*h);
+            Y.push_back(j*h);
+        }
+    }
+
+
+    for(int k=0; k< static_cast<int>(X.size()); k++)
+    {
+        b.push_back(u_p(X[k], Y[k])); 
+    }
+
+    return b;
+}
+
 
 double H(int res)
 //this function calculates h
@@ -131,20 +170,29 @@ vector<double>Initialize_A0(vector<double>A, int N, int width, double h)
 
     if(N/width > 1) //if its not an 1D Problem we need to include the "north" and "south" neigbours
     {
+        for(int i=1; i<N; i++) 
+        {
+            if(i%width == 0)
+            {
+                A[i*N + i - 1] = 0;
+                A[(i-1)*N + i] = 0;
+            }
+        }
+        
         for(int j = 0; j < N; j++)
         {
-            if(j < 3)
+            if(j < width)
             {
-                A[j*N + j + 3] = -1;
+                A[j*N + j + width] = -1;
             }
-            else if(j >= 3 && j < N-3)
+            else if(j >= width && j < N-width)
             {
-                A[j*N + j + 3] = -1;
-                A[j*N + j - 3] = -1;
-            }
-            else if(j >= N-3)
+                A[j*N + j + width] = -1;
+                A[j*N + j - width] = -1;
+            }  
+            else if(j >= N-width)
             {
-                A[j*N + j - 3] = -1;
+                A[j*N + j - width] = -1;
             }
         }
     }
@@ -155,7 +203,7 @@ vector<double>Initialize_A0(vector<double>A, int N, int width, double h)
 void vector_printer(vector<double>b)
 //function prints vector<double>
 {
-    for(int i=0; i<b.size(); i++)
+    for(int i=0; i<static_cast<int>(b.size()); i++)
     {
         cout << b[i] << endl;
     }
@@ -165,7 +213,7 @@ void vector_printer(vector<double>b)
 void vector_printer_int(vector<int>b)
 //function prints vector<int>
 {
-    for(int i=0; i<b.size(); i++)
+    for(int i=0; i<static_cast<int>(b.size()); i++)
     {
         cout << b[i] << endl;
     }
