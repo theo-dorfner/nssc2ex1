@@ -27,7 +27,7 @@ vector<int> UnknownsPerProc(vector<int>PPP, int precs, int proc) //this function
     return PPP;
 }
 
-vector<int> UPPtoYBegin(vector<int>UPP, int prec, int proc) //transforms f.e. (12,12,6,6) to (1, 3, 5, 6); helpfunction for b0 initialization
+vector<int> UPPtoYBegin(vector<int>UPP, int prec, int proc) //transforms f.e. (12,12,6,6) to (1, 3, 5, 6, ...); helpfunction for b0 initialization
 {
     vector<int>Y_begin;
     int N = UPP.size();
@@ -166,20 +166,29 @@ vector<double>Initialize_A0(vector<double>A, int N, int width, double h)
 
     if(N/width > 1) //if its not an 1D Problem we need to include the "north" and "south" neigbours
     {
+        for(int i=1; i<N; i++) 
+        {
+            if(i%Nx == 0)
+            {
+                A[i*N + i - 1] = 0;
+                A[(i-1)*N + i] = 0;
+            }
+        }
+        
         for(int j = 0; j < N; j++)
         {
-            if(j < 3)
+            if(j < Nx)
             {
-                A[j*N + j + 3] = -1;
+                A[j*N + j + Nx] = -1;
             }
-            else if(j >= 3 && j < N-3)
+            else if(j >= Nx && j < N-Nx)
             {
-                A[j*N + j + 3] = -1;
-                A[j*N + j - 3] = -1;
-            }
-            else if(j >= N-3)
+                A[j*N + j + Nx] = -1;
+                A[j*N + j - Nx] = -1;
+            }  
+            else if(j >= N-Nx)
             {
-                A[j*N + j - 3] = -1;
+                A[j*N + j - Nx] = -1;
             }
         }
     }
