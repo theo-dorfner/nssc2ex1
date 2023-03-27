@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
                 sum += A[j+fullSize*i] * solutionU[(counter+1)%2][j];
             }
             //std::cout << ghostValues[i] << std::endl;
-            solutionU[counter%2][i] = (b[i] + ghostValues[i] - sum)/A[i+fullSize*i];
+            solutionU[counter%2][i] = (b[i] + ghostValues[i]*h*h - sum)/A[i+fullSize*i];
         }
 
         //calc runtime
