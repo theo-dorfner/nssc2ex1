@@ -135,6 +135,7 @@ int main(int argc, char* argv[]) {
 
     //std::cout << "on " << my_rank << " going north is " << idNorth << std::endl;
     //std::cout << "on " << my_rank << " going south is " << idSouth << std::endl;
+    std::cout << printf("jacobiMPI | resolution: %i; iterations: %i; dimension: %i; processes: %i",resolution,iterations,ndims,proc);
 
     // start iterations
     for(int counter = 0; counter < iterations; ++counter){
@@ -186,7 +187,7 @@ int main(int argc, char* argv[]) {
     for(int i=0; i < fullSize; ++i){
         finalSolution[i] = solutionU[iterations % 2][i];
         //if(my_rank == 0) std::cout << finalSolution[i] << std::endl;
-        rhs[i] = b[i] ;//+ ghostValues[i];
+        rhs[i] = b[i] + ghostValues[i]*h*h;
     }
     // calculate mean runtime in seconds
     double meanRuntime = procRuntime.count()/(std::pow(10,9)*iterations*1.0);
@@ -203,8 +204,6 @@ int main(int argc, char* argv[]) {
     the way NX and NY are defined:
     int NX = precs;
     int NY = UPP[my_rank] / precs;
-
-
 
     */
 
@@ -239,6 +238,8 @@ int main(int argc, char* argv[]) {
     //std::vector <double> errorMax_vec(proc, 0);
     double runtime_sum;
 
+   //if(my_rank == 0)vector_printer(error_elemets);
+
     // gather all error and residual and runtime to combine and sum up 
     MPI_Reduce( &residualNorm_proc, &residualNorm_2, 1, MPI_DOUBLE,
                 MPI_SUM, 0, MPI_COMM_WORLD);
@@ -265,7 +266,7 @@ int main(int argc, char* argv[]) {
         // Output the result
         std::cout << std::scientific << "|residual|=" << residualNorm << std::endl;
         std::cout << std::scientific << "|residualMax|=" << residualMax << std::endl;
-        std::cout << std::scientific << "|error|=" << errorNorm << std::endl;
+        std::cout << std::scientific << "|error|=" << errorNorm/(NX*NY) << std::endl;
         std::cout << std::scientific << "|errorMax|=" << errorMax << std::endl;
         std::cout << std::scientific << "average runtime per iteration = " << mean_runtime << std::endl;
     

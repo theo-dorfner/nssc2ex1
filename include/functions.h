@@ -4,6 +4,8 @@
 
 using namespace std;
 
+void vector_printer(vector<double>b);
+
 vector<int> UnknownsPerProc(vector<int>PPP, int precs, int proc)
 //this function declares how big the A, u and f are in the "Blocks"
 {
@@ -64,6 +66,7 @@ vector<double>Initialize_b0(vector<double>b, vector<int>Y_begin, int prec, doubl
 {
     vector<double>X;
     vector<double>Y;
+    vector<double>bc;
 
     for(int j=Y_begin[my_rank]; j<Y_begin[my_rank+1]; j++) //die Y-Koordinate lauft werte bis zum naechsten rank durch
     {
@@ -79,6 +82,7 @@ vector<double>Initialize_b0(vector<double>b, vector<int>Y_begin, int prec, doubl
     {
         if(abs(Y[k] - (1-h)) < 1e-5)
         {
+            //if(my_rank == 1) std::cout << Y[k] - (1-2*h) << " - " << BC(X[k]) << std::endl;
             b.push_back(f(X[k], Y[k])*h*h + BC(X[k]));   //u_p including the BC
         }
         else
@@ -87,6 +91,7 @@ vector<double>Initialize_b0(vector<double>b, vector<int>Y_begin, int prec, doubl
         }
     }
 
+    //if(my_rank == 1)vector_printer(b);
     return b;
 }
 
