@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
                 sum += A[j+fullSize*i] * solutionU[(counter+1)%2][j];
             }
             //std::cout << ghostValues[i] << std::endl;
-            solutionU[counter%2][i] = (b[i] + ghostValues[i] - sum)/A[i+fullSize*i];
+            solutionU[counter%2][i] = (b[i] + ghostValues[i]*h*h - sum)/A[i+fullSize*i];
         }
 
         //calc runtime
@@ -222,21 +222,26 @@ int main(int argc, char* argv[]) {
     residual_elements = Residual_Calc(NX, NY, resolution, finalSolution, rhs);
     error_elemets = Error_Calc(NX, NY, finalSolution, solution);
 
-    // Claculating Error and Residual per Process
+    // Clculating Error and Residual Norm per Process
     double residualNorm_proc = NormL2_2(residual_elements);
     double residualMax_proc = NormInf(residual_elements);
     double errorNorm_proc = NormL2_2(error_elemets);
     double errorMax_proc = NormInf(error_elemets);
 
+    //std::cout << my_rank << " : "<< errorMax_proc << std::endl;
+    if(my_rank == 6) matrix_printer(A, UPP[my_rank]);
+
+    //if(my_rank == 6 ){
+    //    std::cout << my_rank << " : "<< errorMax_proc << std::endl;
+    //    vector_printer(error_elemets);
+    //}
 
     // Initialize for combining
     int root = 0;
     double residualNorm_2;
     double residualMax;
-    //std::vector <double> residualMax_vec(proc, 0);
     double errorNorm_2;
     double errorMax;
-    //std::vector <double> errorMax_vec(proc, 0);
     double runtime_sum;
 
     // gather all error and residual and runtime to combine and sum up 
@@ -263,11 +268,11 @@ int main(int argc, char* argv[]) {
         auto errorNorm = sqrt(errorNorm_2);
 
         // Output the result
-        std::cout << std::scientific << "|residual|=" << residualNorm << std::endl;
-        std::cout << std::scientific << "|residualMax|=" << residualMax << std::endl;
-        std::cout << std::scientific << "|error|=" << errorNorm << std::endl;
-        std::cout << std::scientific << "|errorMax|=" << errorMax << std::endl;
-        std::cout << std::scientific << "average runtime per iteration = " << mean_runtime << std::endl;
+        std::cout << std::scientific << "|residual|= " << residualNorm << std::endl;
+        std::cout << std::scientific << "|residualMax|= " << residualMax << std::endl;
+        std::cout << std::scientific << "|error|= " << errorNorm << std::endl;
+        std::cout << std::scientific << "|errorMax|= " << errorMax << std::endl;
+        std::cout << std::scientific << "average_runtime_per_iteration= " << mean_runtime << std::endl;
     
     }
 

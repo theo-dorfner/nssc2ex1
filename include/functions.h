@@ -77,7 +77,7 @@ vector<double>Initialize_b0(vector<double>b, vector<int>Y_begin, int prec, doubl
 
     for(int k=0; k< static_cast<int>(X.size()); k++)
     {
-        if(abs(Y[k] - (1-h)) < 1e-5)
+        if(abs(Y[k] - (1-h)) < 1e-5 && my_rank == (proc - 1))
         {
             b.push_back(f(X[k], Y[k])*h*h + BC(X[k]));   //u_p including the BC
         }
