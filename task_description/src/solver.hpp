@@ -176,6 +176,7 @@ void PoissonJacobiStencil(size_t resolution, size_t iterations) {
           .count();
   std::cout << std::scientific << "runtime=" << seconds << std::endl;
 
+
   {
     auto residual = ComputeResidual(solution, rightHandSide, stencil, NX, NY);
     auto residualNorm = NormL2(residual);
@@ -184,6 +185,7 @@ void PoissonJacobiStencil(size_t resolution, size_t iterations) {
     std::cout << std::scientific << "|residualMax|=" << residualMax
               << std::endl;
     auto error = ComputeError(solution, referenceSolution, NX, NY);
+    //for(auto &elem : rightHandSide)std::cout << elem << std::endl;
     auto errorNorm = NormL2(error);
     std::cout << std::scientific << "|error|=" << errorNorm << std::endl;
     auto errorMax = NormInf(error);
