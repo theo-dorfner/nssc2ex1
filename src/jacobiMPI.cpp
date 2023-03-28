@@ -135,7 +135,7 @@ int main(int argc, char* argv[]) {
 
     //std::cout << "on " << my_rank << " going north is " << idNorth << std::endl;
     //std::cout << "on " << my_rank << " going south is " << idSouth << std::endl;
-    std::cout << printf("jacobiMPI | resolution: %i; iterations: %i; dimension: %i; processes: %i",resolution,iterations,ndims,proc);
+    if(my_rank == 0)std::cout << printf("jacobiMPI | resolution: %i; iterations: %i; dimension: %i; processes: %i",resolution,iterations,ndims,proc) << std::endl;
 
     // start iterations
     for(int counter = 0; counter < iterations; ++counter){
