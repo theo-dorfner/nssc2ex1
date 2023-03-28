@@ -135,7 +135,9 @@ int main(int argc, char* argv[]) {
 
     //std::cout << "on " << my_rank << " going north is " << idNorth << std::endl;
     //std::cout << "on " << my_rank << " going south is " << idSouth << std::endl;
-    if(my_rank == 0)std::cout << printf("jacobiMPI | resolution: %i; iterations: %i; dimension: %i; processes: %i",resolution,iterations,ndims,proc) << std::endl;
+    if(my_rank == 0){
+        printf("jacobiMPI | resolution: %i; iterations: %i; dimension: %i; processes: %i",resolution,iterations,ndims,proc);
+        std::cout << std::endl;}
 
     // start iterations
     for(int counter = 0; counter < iterations; ++counter){
@@ -228,7 +230,6 @@ int main(int argc, char* argv[]) {
     double errorMax_proc = NormInf(error_elemets);
 
     //std::cout << my_rank << " : "<< errorMax_proc << std::endl;
-    if(my_rank == 6) matrix_printer(A, UPP[my_rank]);
 
     //if(my_rank == 6 ){
     //    std::cout << my_rank << " : "<< errorMax_proc << std::endl;
