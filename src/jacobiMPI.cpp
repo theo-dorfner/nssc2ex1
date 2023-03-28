@@ -275,7 +275,8 @@ int main(int argc, char* argv[]) {
         std::cout << std::scientific << "|error|= " << errorNorm << std::endl;
         std::cout << std::scientific << "|errorMax|= " << errorMax << std::endl;
         std::cout << std::scientific << "average_runtime_per_iteration= " << mean_runtime << std::endl;
-    
+        std::cout << "---" << std::endl;
+
     }
 
     MPI_Finalize();
