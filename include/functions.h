@@ -80,7 +80,7 @@ vector<double>Initialize_b0(vector<double>b, vector<int>Y_begin, int prec, doubl
 
     for(int k=0; k< static_cast<int>(X.size()); k++)
     {
-        if(abs(Y[k] - (1-h)) < 1e-5)
+        if(abs(Y[k] - (1-h)) < 1e-5 && my_rank == (proc - 1))
         {
             //if(my_rank == 1) std::cout << Y[k] - (1-2*h) << " - " << BC(X[k]) << std::endl;
             b.push_back(f(X[k], Y[k])*h*h + BC(X[k]));   //u_p including the BC
