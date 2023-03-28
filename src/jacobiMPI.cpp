@@ -70,8 +70,9 @@ int main(int argc, char* argv[]) {
     vector<double>b;
     vector<double>u(UPP[my_rank],0);
     //starting value for vector u is all zero
-    vector<double>A(UPP[my_rank]*UPP[my_rank],0);
-    //this is a Matrix --> initialize with A[j*N+i]
+    vector<double>A;
+    vector<int>X;
+    vector<int>Y; 
 
     //B.2. Helpfunctions for the Initialization of A and b;
     double h = H(resolution);
@@ -81,8 +82,63 @@ int main(int argc, char* argv[]) {
     y_begin = UPPtoYBegin(UPP, precs, proc);
 
     //B.3. Initialization of A and b;
-    A = Initialize_A0(A, UPP[my_rank], precs, h);
+    //A = Initialize_A0(A, UPP[my_rank], precs, h);
     b = Initialize_b0(b, y_begin, precs, h, my_rank, proc);
+
+    double alpha = 4 + 4 * M_PI * M_PI * h * h;
+
+    /*
+    vector<double> stencil {-1, alpha,-1};
+
+    for(int j=0; j<UPP[my_rank]; j++)
+    {
+        A.push_back(alpha); //alle Diagonalwerte
+        X.push_back(j);
+        Y.push_back(j);
+    }
+    
+    for(int j=0; j<UPP[my_rank]; j++)
+    {
+        if(j % precs != 0 && -1 < j  && j < UPP[my_rank])
+        {
+            A.push_back(-1);
+            X.push_back(j+1);
+            Y.push_back(j);
+
+            A.push_back(-1);
+            X.push_back(j-1);
+            Y.push_back(j);
+        }
+    }
+
+    if(UPP[my_rank]/precs > 1) //if its not an 1D Problem we need to include the "north" and "south" neigbours
+    {
+        for(int j = 0; j < UPP[my_rank]; j++)
+        {
+            if(j < precs)
+            {
+                A.push_back(-1);
+                X.push_back(j + precs);
+                Y.push_back(j);
+            }
+            else if(j >= precs && j < UPP[my_rank]-precs)
+            {
+                A.push_back(-1);
+                X.push_back(j + precs);
+                Y.push_back(j);
+
+                A.push_back(-1);
+                X.push_back(j - precs);
+                Y.push_back(j);
+            }  
+            else if(j >= UPP[my_rank]-precs)
+            {
+                A.push_back(-1);
+                X.push_back(j - precs);
+                Y.push_back(j);
+            }
+        }
+    }*/
 
     //matrix_printer(A, UPP[my_rank]);
 
@@ -166,12 +222,47 @@ int main(int argc, char* argv[]) {
         // actually calculate jacobi
         for(int i=0; i<fullSize; i++){
             double sum{0};
+            if(i==0)
+            {
+                sum +=  - solutionU[(counter+1)%2][1] 
+                        - solutionU[(counter+1)%2][precs];
+            }
+            if(i>0 && i<precs)
+            {
+                sum +=  - solutionU[(counter+1)%2][i+precs];           
+                
+                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
+                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
+            }
+            if(i>=precs && i<(UPP[my_rank]-precs))
+            {
+                sum +=  - solutionU[(counter+1)%2][i-precs]
+                        - solutionU[(counter+1)%2][i+precs];
+                
+                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
+                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
+            }
+            if(i>=(UPP[my_rank]-precs) && i<UPP[my_rank]-1)
+            {
+                sum +=  - solutionU[(counter+1)%2][i-precs];
+                
+                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
+                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
+            }
+            if(i==UPP[my_rank]-1)
+            {
+                sum +=  - solutionU[(counter+1)%2][UPP[my_rank]-2] 
+                        - solutionU[(counter+1)%2][UPP[my_rank]-1-precs];
+            }
+
+            /*
             for(int j=0; j<fullSize; j++) {
                 if(i==j) continue;
-                sum += A[j+fullSize*i] * solutionU[(counter+1)%2][j];
+                sum += A_at(A,X,Y,i,j) * solutionU[(counter+1)%2][j];
             }
+            */
             //std::cout << ghostValues[i] << std::endl;
-            solutionU[counter%2][i] = (b[i] + ghostValues[i] - sum)/A[i+fullSize*i];
+            solutionU[counter%2][i] = (b[i] + ghostValues[i]*h*h - sum)/alpha;
         }
 
         //calc runtime
@@ -186,7 +277,7 @@ int main(int argc, char* argv[]) {
     for(int i=0; i < fullSize; ++i){
         finalSolution[i] = solutionU[iterations % 2][i];
         //if(my_rank == 0) std::cout << finalSolution[i] << std::endl;
-        rhs[i] = b[i] + ghostValues[i];
+        rhs[i] = b[i] + ghostValues[i]*h*h;
     }
     // calculate mean runtime in seconds
     double meanRuntime = procRuntime.count()/(std::pow(10,9)*iterations*1.0);

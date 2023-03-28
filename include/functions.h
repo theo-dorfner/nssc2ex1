@@ -1,6 +1,7 @@
 #include<cmath>
 #include<vector>
 #include<random>
+#include<algorithm>
 
 using namespace std;
 
@@ -62,28 +63,23 @@ double BC(double X)
 vector<double>Initialize_b0(vector<double>b, vector<int>Y_begin, int prec, double h, int my_rank, int proc)
 //this function initializes b0
 {
-    vector<double>X;
-    vector<double>Y;
+    double X;
+    double Y;
 
     for(int j=Y_begin[my_rank]; j<Y_begin[my_rank+1]; j++) //die Y-Koordinate lauft werte bis zum naechsten rank durch
     {
         for(int i=1; i<prec+1; i++)
         {
-            X.push_back(i*h);
-            Y.push_back(j*h);
-        }
-    }
-
-
-    for(int k=0; k< static_cast<int>(X.size()); k++)
-    {
-        if(abs(Y[k] - (1-h)) < 1e-5)
-        {
-            b.push_back(f(X[k], Y[k])*h*h + BC(X[k]));   //u_p including the BC
-        }
-        else
-        {
-            b.push_back(f(X[k], Y[k])*h*h); //only u_p without BC
+            X = i*h;
+            Y = j*h;
+            if(abs(Y - (1-h)) < 1e-5)
+            {
+                b.push_back(f(X, Y)*h*h + BC(X));   //u_p including the BC
+            }
+            else
+            {
+                b.push_back(f(X, Y)*h*h); //only u_p without BC
+            }
         }
     }
 
@@ -108,22 +104,17 @@ double u_p(double X, double Y)
 
 vector<double>Initialize_up(vector<double>b, vector<int>Y_begin, int prec, double h, int my_rank, int proc)
 {
-    vector<double>X;
-    vector<double>Y;
+    double X;
+    double Y;
 
     for(int j=Y_begin[my_rank]; j<Y_begin[my_rank+1]; j++) //die Y-Koordinate lauft werte bis zum naechsten rank durch
     {
         for(int i=1; i<prec+1; i++)
         {
-            X.push_back(i*h);
-            Y.push_back(j*h);
+            X = i*h;
+            Y = j*h;
+            b.push_back(u_p(X, Y)); 
         }
-    }
-
-
-    for(int k=0; k< static_cast<int>(X.size()); k++)
-    {
-        b.push_back(u_p(X[k], Y[k])); 
     }
 
     return b;
@@ -137,7 +128,43 @@ double H(int res)
       return h;
 }
 
-vector<double>Initialize_A0(vector<double>A, int N, int width, double h)
+/*
+double A_at(vector<double>A, vector<int>X, vector<int>Y, int x_value, int y_value)
+{
+    //std::vector<int>::iterator it;
+    auto it = std::find(A.begin(), A.end(), x_value);
+    int i = atoi(it);
+
+    if(i == y_value)
+    {
+        return A[i];
+    }
+ 
+    return 0;
+}*/
+
+double A_at(vector<double>A, vector<int>X, vector<int>Y, int x_value, int y_value)
+{
+    int max = X.size();
+    //int meister = 0;
+    
+    for(int i=0; i<max; i++)
+    {
+        if(X[i]==x_value)
+        {
+            if(Y[i]==y_value)
+            {
+                return A[i];
+            }
+        }
+    }
+    return 0;
+}
+
+
+
+/*
+vector<vector<double>>Initialize_A0(vector<double>A, vector<int>X_A, vector<int>X_B, int N, int width, double h)
 //this function initialize A0
 {
     double alpha = 4 + 4 * M_PI * M_PI * h * h;
@@ -149,21 +176,21 @@ vector<double>Initialize_A0(vector<double>A, int N, int width, double h)
         {
             for(int i=0; i<2; i++)
             {
-                A.at(j*N + i) = stencil.at(i+1);
+                A[j][i] = stencil.at(i+1);
             }
         }
         else if(j == N-1)
         {
             for(int i=N-2; i<N; i++)
             {
-                A.at(j*N + i) = stencil.at(j-i+1);
+                A[j][i] = stencil.at(j-i+1);
             }
         }
         else
         {
             for(int i=j-1; i<j+2; i++)
             {
-                A.at(j*N + i) = stencil.at(j-i+1);
+                A[j][i] = stencil.at(j-i+1);
             }
         }
     }
@@ -174,8 +201,8 @@ vector<double>Initialize_A0(vector<double>A, int N, int width, double h)
         {
             if(i%width == 0)
             {
-                A[i*N + i - 1] = 0;
-                A[(i-1)*N + i] = 0;
+                A[i][i-1] = 0;
+                A[i-1][i] = 0;
             }
         }
         
@@ -183,22 +210,22 @@ vector<double>Initialize_A0(vector<double>A, int N, int width, double h)
         {
             if(j < width)
             {
-                A[j*N + j + width] = -1;
+                A[j][j + width] = -1;
             }
             else if(j >= width && j < N-width)
             {
-                A[j*N + j + width] = -1;
-                A[j*N + j - width] = -1;
+                A[j][j + width] = -1;
+                A[j][j - width] = -1;
             }  
             else if(j >= N-width)
             {
-                A[j*N + j - width] = -1;
+                A[j][j - width] = -1;
             }
         }
     }
     return A;
-}
-
+}   
+*/
 
 void vector_printer(vector<double>b)
 //function prints vector<double>
