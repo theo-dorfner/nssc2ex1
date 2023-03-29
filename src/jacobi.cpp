@@ -442,7 +442,7 @@ int main(int argc, char* argv[])
 
         // actually calculate jacobi
         // das sind andere i,j als in den grid-koordinaten (diese hier sind nur intern für berechnungen der Matrix)
-        for(int i=0; i<fullSize; i++){
+        for(int i=0; i<UPP; i++){
             double sum{0};
             if(i==0)
             {
@@ -490,9 +490,9 @@ int main(int argc, char* argv[])
         //if(counter == iterations) std::cout << "problem with counter not being interations" << std::endl;
 
         // prepare output
-        std::vector<double> finalSolution(fullSize);
-        std::vector<double> rhs(fullSize);
-        for(int i=0; i < fullSize; ++i){
+        std::vector<double> finalSolution(UPP);
+        std::vector<double> rhs(UPP);
+        for(int i=0; i < UPP; ++i){
             finalSolution[i] = solutionU[iterations % 2][i];
             //if(my_rank == 0) std::cout << finalSolution[i] << std::endl;
             rhs[i] = b[i] + ghostValues[i]*h*h;
