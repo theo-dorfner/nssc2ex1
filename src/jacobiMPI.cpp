@@ -69,9 +69,6 @@ int main(int argc, char* argv[]) {
     std::vector<double>b;
     std::vector<double>u(UPP[my_rank],0);
     //starting value for vector u is all zero
-    //vector<double>A;
-    //vector<int>X;
-    //vector<int>Y; 
 
     //B.2. Helpfunctions for the Initialization of A and b;
     double h = H(resolution);
@@ -83,62 +80,9 @@ int main(int argc, char* argv[]) {
     //B.3. Initialization of A and b;
     //A = Initialize_A0(A, UPP[my_rank], precs, h);
     b = Initialize_b0(b, y_begin, precs, h, my_rank, proc);
-
     double alpha = 4 + 4 * M_PI * M_PI * h * h;
 
-    /*
-    vector<double> stencil {-1, alpha,-1};
-
-    for(int j=0; j<UPP[my_rank]; j++)
-    {
-        A.push_back(alpha); //alle Diagonalwerte
-        X.push_back(j);
-        Y.push_back(j);
-    }
     
-    for(int j=0; j<UPP[my_rank]; j++)
-    {
-        if(j % precs != 0 && -1 < j  && j < UPP[my_rank])
-        {
-            A.push_back(-1);
-            X.push_back(j+1);
-            Y.push_back(j);
-
-            A.push_back(-1);
-            X.push_back(j-1);
-            Y.push_back(j);
-        }
-    }
-
-    if(UPP[my_rank]/precs > 1) //if its not an 1D Problem we need to include the "north" and "south" neigbours
-    {
-        for(int j = 0; j < UPP[my_rank]; j++)
-        {
-            if(j < precs)
-            {
-                A.push_back(-1);
-                X.push_back(j + precs);
-                Y.push_back(j);
-            }
-            else if(j >= precs && j < UPP[my_rank]-precs)
-            {
-                A.push_back(-1);
-                X.push_back(j + precs);
-                Y.push_back(j);
-
-                A.push_back(-1);
-                X.push_back(j - precs);
-                Y.push_back(j);
-            }  
-            else if(j >= UPP[my_rank]-precs)
-            {
-                A.push_back(-1);
-                X.push_back(j - precs);
-                Y.push_back(j);
-            }
-        }
-    }*/
-
     //matrix_printer(A, UPP[my_rank]);
 
     /*
@@ -150,10 +94,6 @@ int main(int argc, char* argv[]) {
     cout<<"Have a nice day :-) from rank "<<my_rank<<endl;
     cout<<"--------------------------------------------"<<endl<<endl;
     */
-
-
-
-
 
 
 
@@ -230,14 +170,14 @@ int main(int argc, char* argv[]) {
                 sum +=  - solutionU[(counter+1)%2][1] 
                         - solutionU[(counter+1)%2][precs];
             }
-            if(i>0 && i<precs)
+            else if(i>0 && i<precs)
             {
                 sum +=  - solutionU[(counter+1)%2][i+precs];           
                 
                 if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
                 if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
             }
-            if(i>=precs && i<(UPP[my_rank]-precs))
+            else if(i>=precs && i<(UPP[my_rank]-precs))
             {
                 sum +=  - solutionU[(counter+1)%2][i-precs]
                         - solutionU[(counter+1)%2][i+precs];
@@ -245,14 +185,14 @@ int main(int argc, char* argv[]) {
                 if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
                 if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
             }
-            if(i>=(UPP[my_rank]-precs) && i<UPP[my_rank]-1)
+            else if(i>=(UPP[my_rank]-precs) && i<UPP[my_rank]-1)
             {
                 sum +=  - solutionU[(counter+1)%2][i-precs];
                 
                 if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
                 if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
             }
-            if(i==UPP[my_rank]-1)
+            else if(i==UPP[my_rank]-1)
             {
                 sum +=  - solutionU[(counter+1)%2][UPP[my_rank]-2] 
                         - solutionU[(counter+1)%2][UPP[my_rank]-1-precs];

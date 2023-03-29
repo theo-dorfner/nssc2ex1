@@ -131,21 +131,6 @@ double H(int res)
       return h;
 }
 
-/*
-double A_at(vector<double>A, vector<int>X, vector<int>Y, int x_value, int y_value)
-{
-    //std::vector<int>::iterator it;
-    auto it = std::find(A.begin(), A.end(), x_value);
-    int i = atoi(it);
-
-    if(i == y_value)
-    {
-        return A[i];
-    }
- 
-    return 0;
-}*/
-
 double A_at(vector<double>A, vector<int>X, vector<int>Y, int x_value, int y_value)
 {
     int max = X.size();
@@ -163,72 +148,6 @@ double A_at(vector<double>A, vector<int>X, vector<int>Y, int x_value, int y_valu
     }
     return 0;
 }
-
-
-
-/*
-vector<vector<double>>Initialize_A0(vector<double>A, vector<int>X_A, vector<int>X_B, int N, int width, double h)
-//this function initialize A0
-{
-    double alpha = 4 + 4 * M_PI * M_PI * h * h;
-    vector<double> stencil {-1, alpha,-1};
-
-    for(int j=0; j<N; j++)
-    {
-        if(j == 0)
-        {
-            for(int i=0; i<2; i++)
-            {
-                A[j][i] = stencil.at(i+1);
-            }
-        }
-        else if(j == N-1)
-        {
-            for(int i=N-2; i<N; i++)
-            {
-                A[j][i] = stencil.at(j-i+1);
-            }
-        }
-        else
-        {
-            for(int i=j-1; i<j+2; i++)
-            {
-                A[j][i] = stencil.at(j-i+1);
-            }
-        }
-    }
-
-    if(N/width > 1) //if its not an 1D Problem we need to include the "north" and "south" neigbours
-    {
-        for(int i=1; i<N; i++) 
-        {
-            if(i%width == 0)
-            {
-                A[i][i-1] = 0;
-                A[i-1][i] = 0;
-            }
-        }
-        
-        for(int j = 0; j < N; j++)
-        {
-            if(j < width)
-            {
-                A[j][j + width] = -1;
-            }
-            else if(j >= width && j < N-width)
-            {
-                A[j][j + width] = -1;
-                A[j][j - width] = -1;
-            }  
-            else if(j >= N-width)
-            {
-                A[j][j - width] = -1;
-            }
-        }
-    }
-    return A;
-}   
-*/
 
 void vector_printer(vector<double>b)
 //function prints vector<double>
