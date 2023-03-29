@@ -5,6 +5,8 @@
 
 using namespace std;
 
+void vector_printer(vector<double>b);
+
 vector<int> UnknownsPerProc(vector<int>PPP, int precs, int proc)
 //this function declares how big the A, u and f are in the "Blocks"
 {
@@ -83,6 +85,7 @@ vector<double>Initialize_b0(vector<double>b, vector<int>Y_begin, int prec, doubl
         }
     }
 
+    //if(my_rank == 1)vector_printer(b);
     return b;
 }
 

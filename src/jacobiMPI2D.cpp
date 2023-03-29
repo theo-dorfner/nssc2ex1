@@ -69,9 +69,8 @@ int main(int argc, char* argv[]) {
     std::vector<double>b;
     std::vector<double>u(UPP[my_rank],0);
     //starting value for vector u is all zero
-    //vector<double>A;
-    //vector<int>X;
-    //vector<int>Y; 
+    std::vector<double>A(UPP[my_rank]*UPP[my_rank],0);
+    //this is a Matrix --> initialize with A[j*N+i]
 
     //B.2. Helpfunctions for the Initialization of A and b;
     double h = H(resolution);
@@ -81,63 +80,8 @@ int main(int argc, char* argv[]) {
     y_begin = UPPtoYBegin(UPP, precs, proc);
 
     //B.3. Initialization of A and b;
-    //A = Initialize_A0(A, UPP[my_rank], precs, h);
+    A = Initialize_A0(A, UPP[my_rank], precs, h);
     b = Initialize_b0(b, y_begin, precs, h, my_rank, proc);
-
-    double alpha = 4 + 4 * M_PI * M_PI * h * h;
-
-    /*
-    vector<double> stencil {-1, alpha,-1};
-
-    for(int j=0; j<UPP[my_rank]; j++)
-    {
-        A.push_back(alpha); //alle Diagonalwerte
-        X.push_back(j);
-        Y.push_back(j);
-    }
-    
-    for(int j=0; j<UPP[my_rank]; j++)
-    {
-        if(j % precs != 0 && -1 < j  && j < UPP[my_rank])
-        {
-            A.push_back(-1);
-            X.push_back(j+1);
-            Y.push_back(j);
-
-            A.push_back(-1);
-            X.push_back(j-1);
-            Y.push_back(j);
-        }
-    }
-
-    if(UPP[my_rank]/precs > 1) //if its not an 1D Problem we need to include the "north" and "south" neigbours
-    {
-        for(int j = 0; j < UPP[my_rank]; j++)
-        {
-            if(j < precs)
-            {
-                A.push_back(-1);
-                X.push_back(j + precs);
-                Y.push_back(j);
-            }
-            else if(j >= precs && j < UPP[my_rank]-precs)
-            {
-                A.push_back(-1);
-                X.push_back(j + precs);
-                Y.push_back(j);
-
-                A.push_back(-1);
-                X.push_back(j - precs);
-                Y.push_back(j);
-            }  
-            else if(j >= UPP[my_rank]-precs)
-            {
-                A.push_back(-1);
-                X.push_back(j - precs);
-                Y.push_back(j);
-            }
-        }
-    }*/
 
     //matrix_printer(A, UPP[my_rank]);
 
@@ -168,14 +112,18 @@ int main(int argc, char* argv[]) {
     const int fullSize = NX * NY;
     std::vector<std::vector <double>> solutionU(2, std::vector<double>(fullSize,0));
     std::vector<double> ghostValues(fullSize,0);
-    std::vector<double> ghostInNorth(NX,0), ghostInSouth(NX,0); // are dimensional allocations correct here?
-    std::vector<double> ghostOutNorth(NX,0), ghostOutSouth(NX,0);
-    int idNorth, idSouth, procID{my_rank};
+    std::vector<double> ghostInNorth(NX,0), ghostInSouth(NX,0), ghostInWest(NY,0), ghostInEast(NY,0); // are dimensional allocations correct here?
+    std::vector<double> ghostOutNorth(NX,0), ghostOutSouth(NX,0), ghostOutWest(NY,0), ghostOutEast(NY,0);
+    int idNorth, idSouth, idWest, idEast, procID{my_rank};
     std::chrono::duration<double> procRuntime{0};
     MPI_Request requestNorth;
     MPI_Request requestSouth;
+    MPI_Request requestWest;
+    MPI_Request requestEast;
     MPI_Status statusNorth;
     MPI_Status statusSouth;
+    MPI_Status statusWest;
+    MPI_Status statusEast;
     //int* collector[2] = {&idNorth, &idSouth};
     int startSouth = (NY-1)*NX;
 
@@ -186,14 +134,14 @@ int main(int argc, char* argv[]) {
     //int MPI_Cart_shift(MPI_Comm comm_cart, int direction, int disp, int *rank_source, int *rank_dest)
     MPI_Cart_shift(comm1D, 1, -1, &procID, &idNorth); //vertical - north
     MPI_Cart_shift(comm1D, 1, +1, &procID, &idSouth); //vertical - south
+    MPI_Cart_shift(comm1D, 0, -1, &procID, &idWest); //horizontal - west
+    MPI_Cart_shift(comm1D, 0, +1, &procID, &idEast); //horizontal - east
 
     //for(auto &elem : collector)if(elem < 0)elem = &MPI_PROC_NULL;
 
     //std::cout << "on " << my_rank << " going north is " << idNorth << std::endl;
     //std::cout << "on " << my_rank << " going south is " << idSouth << std::endl;
-    if(my_rank == 0){
-        printf("jacobiMPI | resolution: %i; iterations: %i; dimension: %i; processes: %i",resolution,iterations,ndims,proc);
-        std::cout << std::endl;}
+    if(my_rank == 0)std::cout << printf("jacobiMPI | resolution: %i; iterations: %i; dimension: %i; processes: %i",resolution,iterations,ndims,proc) << std::endl;
 
     // start iterations
     for(int counter = 0; counter < iterations; ++counter){
@@ -202,70 +150,45 @@ int main(int argc, char* argv[]) {
         // generate outgoing ghost layers
         for(int i=0; i<NX;++i) ghostOutSouth[i] = solutionU[(counter+1)%2][startSouth + i];
         for(int i=0; i<NX;++i) ghostOutNorth[i] = solutionU[(counter+1)%2][i];
+        for(int i=0; i<NY;++i) ghostOutWest[i] = solutionU[(counter+1)%2][i*NX];
+        for(int i=1; i<NY+1;++i) ghostOutEast[i] = solutionU[(counter+1)%2][NX*i - 1];
 
         // initiate non-blocking receive
         //MPI_Irecv( buf, count, datatype, source, tag, comm, [OUT] &request_handle);
-        MPI_Irecv( &ghostInNorth[0], NX, MPI_DOUBLE, idNorth, counter, comm1D, &requestNorth);
+        MPI_Irecv( &ghostInNorth[0], NX, MPI_DOUBLE, idNorth, counter, comm1D, &requestNorth); // still needs changing of comm1D
         MPI_Irecv( &ghostInSouth[0], NX, MPI_DOUBLE, idSouth, counter, comm1D, &requestSouth);
+        MPI_Irecv( &ghostInNorth[0], NY, MPI_DOUBLE, idWest, counter, comm1D, &requestWest);
+        MPI_Irecv( &ghostInNorth[0], NY, MPI_DOUBLE, idEast, counter, comm1D, &requestEast);
 
         // initiate send
         MPI_Send(&ghostOutNorth[0], NX,MPI_DOUBLE, idNorth, counter, comm1D);
         MPI_Send(&ghostOutSouth[0], NX,MPI_DOUBLE, idSouth, counter, comm1D);
+        MPI_Send(&ghostOutWest[0], NY,MPI_DOUBLE, idWest, counter, comm1D);
+        MPI_Send(&ghostOutEast[0], NY,MPI_DOUBLE, idEast, counter, comm1D);
 
         // wait for receive
         MPI_Wait(&requestNorth,&statusNorth);
         MPI_Wait(&requestSouth,&statusSouth);
+        MPI_Wait(&requestWest,&statusWest);
+        MPI_Wait(&requestEast,&statusEast);
 
         // --- start jacobi-calculation
         // resolve neighbouring arrays into fullSize index position
         for(int i=0; i<NX;++i) ghostValues[startSouth + i] = (+1) * ghostInSouth[i]; //need to clarify +1/-1 here
         for(int i=0; i<NX;++i) ghostValues[i] = (+1) * ghostInNorth[i];
+        for(int i=0; i<NY;++i) ghostValues[i*NX] = (+1) * ghostInWest[i];
+        for(int i=1; i<NY+1;++i) ghostValues[NX*i - 1] = (+1) * ghostInEast[i];
 
         // actually calculate jacobi
         // das sind andere i,j als in den grid-koordinaten (diese hier sind nur intern für berechnungen der Matrix)
         for(int i=0; i<fullSize; i++){
             double sum{0};
-            if(i==0)
-            {
-                sum +=  - solutionU[(counter+1)%2][1] 
-                        - solutionU[(counter+1)%2][precs];
-            }
-            if(i>0 && i<precs)
-            {
-                sum +=  - solutionU[(counter+1)%2][i+precs];           
-                
-                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
-                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
-            }
-            if(i>=precs && i<(UPP[my_rank]-precs))
-            {
-                sum +=  - solutionU[(counter+1)%2][i-precs]
-                        - solutionU[(counter+1)%2][i+precs];
-                
-                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
-                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
-            }
-            if(i>=(UPP[my_rank]-precs) && i<UPP[my_rank]-1)
-            {
-                sum +=  - solutionU[(counter+1)%2][i-precs];
-                
-                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
-                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
-            }
-            if(i==UPP[my_rank]-1)
-            {
-                sum +=  - solutionU[(counter+1)%2][UPP[my_rank]-2] 
-                        - solutionU[(counter+1)%2][UPP[my_rank]-1-precs];
-            }
-
-            /*
             for(int j=0; j<fullSize; j++) {
                 if(i==j) continue;
-                sum += A_at(A,X,Y,i,j) * solutionU[(counter+1)%2][j];
+                sum += A[j+fullSize*i] * solutionU[(counter+1)%2][j];
             }
-            */
             //std::cout << ghostValues[i] << std::endl;
-            solutionU[counter%2][i] = (b[i] + ghostValues[i]*h*h - sum)/alpha;
+            solutionU[counter%2][i] = (b[i] + ghostValues[i]*h*h - sum)/A[i+fullSize*i];
         }
 
         //calc runtime
@@ -321,6 +244,7 @@ int main(int argc, char* argv[]) {
     double errorMax_proc = NormInf(error_elemets);
 
     //std::cout << my_rank << " : "<< errorMax_proc << std::endl;
+    if(my_rank == 6) matrix_printer(A, UPP[my_rank]);
 
     //if(my_rank == 6 ){
     //    std::cout << my_rank << " : "<< errorMax_proc << std::endl;
@@ -366,8 +290,7 @@ int main(int argc, char* argv[]) {
         std::cout << std::scientific << "|error|= " << errorNorm << std::endl;
         std::cout << std::scientific << "|errorMax|= " << errorMax << std::endl;
         std::cout << std::scientific << "average_runtime_per_iteration= " << mean_runtime << std::endl;
-        std::cout << "---" << std::endl;
-
+    
     }
 
     MPI_Finalize();
