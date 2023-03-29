@@ -4,62 +4,100 @@
 
 using namespace std;
 
+
 vector<int> BiggestDivisors(int procs)
 {
-      vector<int>DIV{1,procs};
+    vector<int>DIV{procs, 1};
 
-      double i = sqrt(procs);
+    double i = sqrt(procs);
+    int l = std::floor(i);
 
-      int l = std::floor(i);
-      for(int j=procs; j>0; j--)
-      {
-          double m = j*l;
-          if(abs(m - procs) < 1e-5)
-          {
-              DIV[0]=j;
-              DIV[1]=l;
-          }
-      }
+    for(int j=0; j<procs-l-1; j++)
+    {
+        if(procs%(l+j) == 0)
+        {
+            DIV[0]=l+j;
+            DIV[1]=procs/DIV[0];
+            break;
+        }
+    }
+
+    if(DIV[0] < DIV[1]) 
+    //i want the first entry in DIV to be bigger than the second!
+    {
+        int a = DIV[0];
+        DIV[0] = DIV[1];
+        DIV[1] = a;
+    }
 
     return DIV;
 }
 
-vector<int> NX_fun(int DIVx, int prec) //separation of nodes in x_direction
-{
-    vector<int> Nx;
-    int min_prec = floor(prec / DIVx);
-    int rest = prec % DIVx;
 
-    for(int i=0; i<DIVx; i++)
+vector<int> UnknownsPerProc(vector<int>PPP, int precs, int proc)
+//this function declares how big the A, u and f are in the "Blocks"
+{
+    vector<int>A;
+    int min_prec = floor(precs / proc);
+    int rest = precs % proc;
+
+    for(int i=0; i<proc; i++)
     {
-        Nx.push_back(min_prec);
+      A.push_back(min_prec);
     }
 
     for(int j=0; j<rest; j++)
     {
-        Nx[j]++;
+      A[j]++;
     }
 
-    return Nx;
+    for(int l=0; l<proc; l++){
+      PPP.push_back(A[l]*precs);
+    }
+
+    return PPP;
 }
 
-vector<int> NY_fun(int DIVy, int prec) //separation of nodes in x_direction
-{
-    vector<int> Ny;
-    int min_prec = floor(prec / DIVy);
-    int rest = prec % DIVy;
 
-    for(int i=0; i<DIVy; i++)
+vector<int> UPPtoYBegin(vector<int>UPP, int prec, int proc) //transforms f.e. (12,12,6,6) to (1, 3, 5, 6, ...); helpfunction for b0 initialization
+{
+    vector<int>Y_begin;
+    int N = UPP.size();
+
+    for(int i = 0; i < N; i++)
     {
-        Ny.push_back(min_prec);
+        UPP[i] = UPP[i] / prec;
+    }
+
+    Y_begin.push_back(1);
+
+    for(int j = 0; j<N-1; j++)
+    {
+        Y_begin.push_back(Y_begin[j] + UPP[j]);
+    }
+    Y_begin.push_back(prec+1);
+
+    return Y_begin;
+}
+
+
+vector<int> N_DIST(int DIVxy, int prec) //separation of nodes in x_direction
+{
+    vector<int> N;
+    int min_prec = floor(prec / DIVxy);
+    int rest = prec % DIVxy;
+
+    for(int i=0; i<DIVxy; i++)
+    {
+        N.push_back(min_prec);
     }
 
     for(int j=0; j<rest; j++)
     {
-        Ny[j]++;
+        N[j]++;
     }
 
-    return Ny;
+    return N;
 }
 
 vector<int>XBegin(vector<int>Nx, int prec)
@@ -136,65 +174,6 @@ double H(int res)
 }
 
 
-vector<double>Initialize_A0(vector<double>A, int N, int Nx, double h)
-{
-    double alpha = 4 + 4 * M_PI * M_PI * h * h;
-    vector<double> stencil {-1, alpha,-1};
-    
-    for(int j=0; j<N; j++) //loop creates banded matrix 
-    {
-        if(j == 0)
-        {
-            for(int i=0; i<2; i++)
-            {
-                A.at(j*N + i) = stencil.at(i+1);
-            }
-        }   
-        else if(j == N-1)
-        {
-            for(int i=N-2; i<N; i++)
-            {
-                A.at(j*N + i) = stencil.at(j-i+1);
-            }
-        }
-        else
-        {
-            for(int i=j-1; i<j+2; i++)
-            {
-                A.at(j*N + i) = stencil.at(j-i+1);
-            }
-        }
-    }
-
-    for(int i=1; i<N; i++) 
-    {
-        if(i%Nx == 0)
-        {
-            A[i*N + i - 1] = 0;
-            A[(i-1)*N + i] = 0;
-        }
-    }
-        
-    for(int j = 0; j < N; j++)
-    {
-        if(j < Nx)
-        {
-            A[j*N + j + Nx] = -1;
-        }
-        else if(j >= Nx && j < N-Nx)
-        {
-            A[j*N + j + Nx] = -1;
-            A[j*N + j - Nx] = -1;
-        }  
-        else if(j >= N-Nx)
-        {
-            A[j*N + j - Nx] = -1;
-        }
-    }
-    
-    return A;
-}
-
 void matrix_printer(vector<double>A, int N)
 {
   for(int j=0; j<N; j++)
@@ -219,7 +198,34 @@ double BC(double X)
 }
 
 
-vector<double>Initialize_b0(vector<double>b, int x_coord, int y_coord, vector<int>x_begin, vector<int> y_begin, double h)
+vector<double>Initialize_b0_1D(vector<double>b, vector<int>Y_begin, int prec, double h, int my_rank, int proc)
+//this function initializes b0
+{
+    double X;
+    double Y;
+
+    for(int j=Y_begin[my_rank]; j<Y_begin[my_rank+1]; j++) //die Y-Koordinate lauft werte bis zum naechsten rank durch
+    {
+        for(int i=1; i<prec+1; i++)
+        {
+            X = i*h;
+            Y = j*h;
+            if(abs(Y - (1-h)) < 1e-5)
+            {
+                b.push_back(f(X, Y)*h*h + BC(X));   //u_p including the BC
+            }
+            else
+            {
+                b.push_back(f(X, Y)*h*h); //only u_p without BC
+            }
+        }
+    }
+
+    //if(my_rank == 1)vector_printer(b);
+    return b;
+}
+
+vector<double>Initialize_b0_2D(vector<double>b, int x_coord, int y_coord, vector<int>x_begin, vector<int> y_begin, double h)
 {
     
     vector<double>X;
