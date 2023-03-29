@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
     std::vector<double> ghostInNorth(NX,0), ghostInSouth(NX,0); // are dimensional allocations correct here?
     std::vector<double> ghostOutNorth(NX,0), ghostOutSouth(NX,0);
     int idNorth, idSouth, procID{my_rank};
-    std::chrono::duration<double> procRuntime{0};
+    std::chrono::duration<double,std::nano> procRuntime{0};
     MPI_Request requestNorth;
     MPI_Request requestSouth;
     MPI_Status statusNorth;
@@ -209,7 +209,7 @@ int main(int argc, char* argv[]) {
         rhs[i] = b[i] + ghostValues[i]*h*h;
     }
     // calculate mean runtime in seconds
-    double meanRuntime = procRuntime.count()/(std::pow(10,9)*iterations*1.0);
+    double meanRuntime = procRuntime.count()/(iterations*1.0*std::pow(10,9));
 
 
     /* things being passed on from my part:
