@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
     
     //2D case
     int dim[2] = {DIV[0], DIV[1]};
-    int periodical[2] = {1, 1};
+    int periodical[2] = {0, 0};
     int reorder = 0;
     int coord[2];
 
@@ -94,8 +94,8 @@ int main(int argc, char* argv[]) {
 // PART THEO
     // definition of matrix sice if unknown variables
     const int NX = NX_rank[my_rank];
-    const int NY = NX_rank[my_rank];
-
+    const int NY = NY_rank[my_rank];
+    printf("my rank: %i; my coords: %i %i; nx, ny: %i %i \n",my_rank,coord[0],coord[1],NX,NY);
 
     //variable declaration
     const int fullSize = NX * NY;
@@ -120,11 +120,16 @@ int main(int argc, char* argv[]) {
     //std::cout << procID << " " << coords << std::endl;
     
     // collect neighbour IDs
+    printf("%i started carting\n",my_rank);
     //int MPI_Cart_shift(MPI_Comm comm_cart, int direction, int disp, int *rank_source, int *rank_dest)
     MPI_Cart_shift(comm1D, 1, -1, &procID, &idNorth); //vertical - north
+    printf("%i finished north %i\n",my_rank,idNorth);
     MPI_Cart_shift(comm1D, 1, +1, &procID, &idSouth); //vertical - south
+    printf("%i finished south %i\n",my_rank,idSouth);
     MPI_Cart_shift(comm1D, 0, -1, &procID, &idWest); //horizontal - west
+    printf("%i finished west %i\n",my_rank,idWest);
     MPI_Cart_shift(comm1D, 0, +1, &procID, &idEast); //horizontal - east
+    printf("%i finished east %i\n",my_rank,idEast);
 
     //for(auto &elem : collector)if(elem < 0)elem = &MPI_PROC_NULL;
 
@@ -142,12 +147,20 @@ int main(int argc, char* argv[]) {
         for(int i=0; i<NY;++i) ghostOutWest[i] = solutionU[(counter+1)%2][i*NX];
         for(int i=1; i<NY+1;++i) ghostOutEast[i] = solutionU[(counter+1)%2][NX*i - 1];
 
+        printf("%i starts receiving\n",my_rank);
+
         // initiate non-blocking receive
         //MPI_Irecv( buf, count, datatype, source, tag, comm, [OUT] &request_handle);
+        printf("%i start receiving north\n",my_rank);
         MPI_Irecv( &ghostInNorth[0], NX, MPI_DOUBLE, idNorth, counter, comm1D, &requestNorth); // still needs changing of comm1D
+        printf("%i start receiving south\n",my_rank);
         MPI_Irecv( &ghostInSouth[0], NX, MPI_DOUBLE, idSouth, counter, comm1D, &requestSouth);
+        printf("%i start receiving west\n",my_rank);
         MPI_Irecv( &ghostInWest[0], NY, MPI_DOUBLE, idWest, counter, comm1D, &requestWest);
+        printf("%i start receiving east\n",my_rank);
         MPI_Irecv( &ghostInEast[0], NY, MPI_DOUBLE, idEast, counter, comm1D, &requestEast);
+
+        printf("%i passed receives\n",my_rank);
 
         // initiate send
         MPI_Send(&ghostOutNorth[0], NX,MPI_DOUBLE, idNorth, counter, comm1D);
@@ -155,11 +168,18 @@ int main(int argc, char* argv[]) {
         MPI_Send(&ghostOutWest[0], NY,MPI_DOUBLE, idWest, counter, comm1D);
         MPI_Send(&ghostOutEast[0], NY,MPI_DOUBLE, idEast, counter, comm1D);
 
+        printf("%i passed sends\n",my_rank);
+
         // wait for receive
         MPI_Wait(&requestNorth,&statusNorth);
         MPI_Wait(&requestSouth,&statusSouth);
         MPI_Wait(&requestWest,&statusWest);
         MPI_Wait(&requestEast,&statusEast);
+
+        printf("%i passed waits\n",my_rank);
+
+        printf("proc %i; cnt %i; status north: ",my_rank,counter);
+        std::cout << statusNorth.MPI_ERROR << std::endl;
 
         // --- start jacobi-calculation
         // resolve neighbouring arrays into fullSize index position
