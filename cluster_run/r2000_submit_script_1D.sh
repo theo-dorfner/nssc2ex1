@@ -25,12 +25,12 @@ mpic++ -std=c++17 -O3 -Wall -pedantic -march=native -ffast-math ../src/jacobi.cp
 
 ## I don't know why they print the hostname in the original job submission, but yeah
 
-srun hostname
+##srun hostname
 
 ## now this is the proper job
 ## ./jacobiMPI <resolution> <iterations>
 
 for n in {1,2,3,5,7,10,12,15,17,20,22,25,27,30,32,35,37,40}
 do
-    srun --mpi=pmix --ntasks=${n} ./jacobi 1D 250 30
+    srun --mpi=pmix --ntasks=${n} ./jacobi 1D 2000 30
 done
