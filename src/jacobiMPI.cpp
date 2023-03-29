@@ -82,20 +82,6 @@ int main(int argc, char* argv[]) {
     b = Initialize_b0(b, y_begin, precs, h, my_rank, proc);
     double alpha = 4 + 4 * M_PI * M_PI * h * h;
 
-    
-    //matrix_printer(A, UPP[my_rank]);
-
-    /*
-    cout << "Hello, my rank is " << my_rank << " and the number of unknowns are " << UPP[my_rank] << endl << endl;
-    cout << "This is my vector b: " << endl;
-    vector_printer(b);
-    cout <<"And this is my matrix A: " << endl;
-    
-    cout<<"Have a nice day :-) from rank "<<my_rank<<endl;
-    cout<<"--------------------------------------------"<<endl<<endl;
-    */
-
-
 
 
 // PART THEO
