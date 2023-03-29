@@ -250,4 +250,27 @@ vector<double>Initialize_b0(vector<double>b, int x_coord, int y_coord, vector<in
     return b;
 }
 
+double u_p(double X, double Y)
+{
+    return sin(2 * M_PI * X) * sinh(2 * M_PI * Y);
+} 
+
+vector<double>Initialize_up(vector<double>b, vector<int>Y_begin, int prec, double h, int my_rank, int proc)
+{
+    double X;
+    double Y;
+
+    for(int j=Y_begin[my_rank]; j<Y_begin[my_rank+1]; j++) //die Y-Koordinate lauft werte bis zum naechsten rank durch
+    {
+        for(int i=1; i<prec+1; i++)
+        {
+            X = i*h;
+            Y = j*h;
+            b.push_back(u_p(X, Y)); 
+        }
+    }
+
+    return b;
+}
+
 

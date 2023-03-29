@@ -1,5 +1,5 @@
-#include <mpi.h>
 #include <stdio.h>
+#include <mpi.h>
 #include <iostream>
 
 #include <cmath>
@@ -8,7 +8,7 @@
 #include <limits>
 #include <chrono>
 
-#include "../include/functions.h"
+#include "../include/functions_2D.h"
 #include "../include/functions_sn.h"
 #include "../include/jacobi.hpp"
 
@@ -20,93 +20,74 @@ int main(int argc, char* argv[]) {
 
     MPI_Init(&argc, &argv);
 
-    int ndims = 1;
-    int proc = 0;
     int my_rank;
+    int procs;
     MPI_Comm comm1D;
-    int dims[1];
-    int wrap_around[1];
-    int reorder;
-    int ierr;
 
-    //A. MPI_Cart creation
+    //A. Cart Creation
+    //A.1 Initialization of MPI
 
-    //A.1. Reading in values
-    int resolution = atoi(argv[1]);
+    string dimension = argv[1];
+    int resolution = atoi(argv[2]);
+    int iterations = atoi(argv[3]);
+
     int precs = resolution - 2;
-    int iterations = atoi(argv[2]);
+    //int iterations = atoi(argv[3]);
 
-    //A.2. Reading out proc and rank; create cart and check if successful
-    MPI_Comm_size(MPI_COMM_WORLD, &proc);
-    //saves number of processes on "proc"
+    MPI_Comm_size(MPI_COMM_WORLD, &procs);
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    //saves current rank on "my_rank"
 
-    dims[0] = 0;
-
-    MPI_Dims_create(proc, ndims, dims);
-
-    wrap_around[0] = 0;
-    reorder = 1;
-    ierr = 0;
-    ierr = MPI_Cart_create(MPI_COMM_WORLD, ndims, dims, wrap_around, reorder, &comm1D);
-    //creating MPI_cart with one dimension
-
-    if(ierr != 0) printf("ERROR[%i] creating CART\n", ierr);
-    //returns error if cart creation wasn't successful
-
-    //this is now done multiple times, but don't know how else to do it!
-    std::vector<int>UPP;
-    UPP = UnknownsPerProc(UPP, precs, proc); //calculates how big dimensions of arrays are for each rank!
-    //Check if resolution high enough for PROCS
-    if(precs < proc)
-    {
-        if(my_rank == 0) cout << "Please choose a resolution that for N procs is at least N+2" << endl;
-        return 0;
-    }
-
-    //B.1. Definition of Matrix A, vector u and vector b; size of arrays corresponds to UPP of the rank;
-    std::vector<double>b;
-    std::vector<double>u(UPP[my_rank],0);
-    //starting value for vector u is all zero
-    std::vector<double>A(UPP[my_rank]*UPP[my_rank],0);
-    //this is a Matrix --> initialize with A[j*N+i]
-
-    //B.2. Helpfunctions for the Initialization of A and b;
-    double h = H(resolution);
-    //calculating h
-    vector<int>y_begin;
-    //vector for the initialization of b
-    y_begin = UPPtoYBegin(UPP, precs, proc);
-
-    //B.3. Initialization of A and b;
-    A = Initialize_A0(A, UPP[my_rank], precs, h);
-    b = Initialize_b0(b, y_begin, precs, h, my_rank, proc);
-
-    //matrix_printer(A, UPP[my_rank]);
-
-    /*
-    cout << "Hello, my rank is " << my_rank << " and the number of unknowns are " << UPP[my_rank] << endl << endl;
-    cout << "This is my vector b: " << endl;
-    vector_printer(b);
-    cout <<"And this is my matrix A: " << endl;
+    //A.2 Cart Creation
+    vector<int> DIV;
+    DIV = BiggestDivisors(procs);
     
-    cout<<"Have a nice day :-) from rank "<<my_rank<<endl;
-    cout<<"--------------------------------------------"<<endl<<endl;
-    */
+    //2D case
+    int dim[2] = {DIV[0], DIV[1]};
+    int periodical[2] = {0, 0};
+    int reorder = 0;
+    int coord[2];
 
+    MPI_Cart_create(MPI_COMM_WORLD, 2, dim, periodical, reorder, &comm1D);
+    MPI_Cart_coords(comm1D, my_rank, 2, coord);
+    
+    //3. Calculation of support functions
 
+    vector<int>NX_rank;
+    //every dimension of each block in x direction
+    vector<int>NY_rank;
+    //every dimension of each block in y direction
+    vector<int>x_begin;
+    //gives back index, where block begins in x_direction
+    vector<int>y_begin;
+    //gives back index, where block begins in y_direction
+    vector<int>UPP;
+    //Unknowns per Process (Block)
+    double h;
 
+    NX_rank = NX_fun(DIV[0], precs); 
+    NY_rank = NY_fun(DIV[1], precs);
+    x_begin = XBegin(NX_rank, precs);
+    y_begin = YBegin(NY_rank, precs);
+    UPP = UPP_fun(NX_rank, NY_rank);
+    h = H(resolution);
 
+    //4. b and A and u initialization
+    //int N = UPP[my_rank];
+    //vector<double>A(N*N, 0);
+    vector<double>u(UPP[my_rank], 0);
+    vector<double>b;
 
-
+    //std::cout << h << std::endl;
+    //A = Initialize_A0(A, N, NX_rank[coord[1]], h);
+    double alpha = 4 + 4 * M_PI * M_PI * h * h; 
+    b = Initialize_b0(b, coord[1], coord[0], x_begin, y_begin, h);
 
 
 // PART THEO
     // definition of matrix sice if unknown variables
-    int NX = precs;
-    int NY = UPP[my_rank] / precs;
-
+    const int NX = NX_rank[my_rank];
+    const int NY = NY_rank[my_rank];
+    printf("my rank: %i; my coords: %i %i; nx, ny: %i %i \n",my_rank,coord[0],coord[1],NX,NY);
 
     //variable declaration
     const int fullSize = NX * NY;
@@ -124,6 +105,7 @@ int main(int argc, char* argv[]) {
     MPI_Status statusSouth;
     MPI_Status statusWest;
     MPI_Status statusEast;
+    
     //int* collector[2] = {&idNorth, &idSouth};
     int startSouth = (NY-1)*NX;
 
@@ -131,18 +113,24 @@ int main(int argc, char* argv[]) {
     //std::cout << procID << " " << coords << std::endl;
     
     // collect neighbour IDs
+    printf("%i started carting\n",my_rank);
     //int MPI_Cart_shift(MPI_Comm comm_cart, int direction, int disp, int *rank_source, int *rank_dest)
     MPI_Cart_shift(comm1D, 1, -1, &procID, &idNorth); //vertical - north
+    printf("%i finished north %i\n",my_rank,idNorth);
     MPI_Cart_shift(comm1D, 1, +1, &procID, &idSouth); //vertical - south
+    printf("%i finished south %i\n",my_rank,idSouth);
     MPI_Cart_shift(comm1D, 0, -1, &procID, &idWest); //horizontal - west
+    printf("%i finished west %i\n",my_rank,idWest);
     MPI_Cart_shift(comm1D, 0, +1, &procID, &idEast); //horizontal - east
+    printf("%i finished east %i\n",my_rank,idEast);
 
     //for(auto &elem : collector)if(elem < 0)elem = &MPI_PROC_NULL;
 
     //std::cout << "on " << my_rank << " going north is " << idNorth << std::endl;
     //std::cout << "on " << my_rank << " going south is " << idSouth << std::endl;
-    if(my_rank == 0)std::cout << printf("jacobiMPI | resolution: %i; iterations: %i; dimension: %i; processes: %i",resolution,iterations,ndims,proc) << std::endl;
+    if(my_rank == 0)std::cout << printf("jacobiMPI | resolution: %i; iterations: %i; processes: %i",resolution,iterations,procs) << std::endl;
 
+    
     // start iterations
     for(int counter = 0; counter < iterations; ++counter){
         auto start = std::chrono::steady_clock::now(); // start runtime timing
@@ -153,12 +141,20 @@ int main(int argc, char* argv[]) {
         for(int i=0; i<NY;++i) ghostOutWest[i] = solutionU[(counter+1)%2][i*NX];
         for(int i=1; i<NY+1;++i) ghostOutEast[i] = solutionU[(counter+1)%2][NX*i - 1];
 
+        printf("%i starts receiving\n",my_rank);
+
         // initiate non-blocking receive
         //MPI_Irecv( buf, count, datatype, source, tag, comm, [OUT] &request_handle);
+        printf("%i start receiving north\n",my_rank);
         MPI_Irecv( &ghostInNorth[0], NX, MPI_DOUBLE, idNorth, counter, comm1D, &requestNorth); // still needs changing of comm1D
+        printf("%i start receiving south\n",my_rank);
         MPI_Irecv( &ghostInSouth[0], NX, MPI_DOUBLE, idSouth, counter, comm1D, &requestSouth);
-        MPI_Irecv( &ghostInNorth[0], NY, MPI_DOUBLE, idWest, counter, comm1D, &requestWest);
-        MPI_Irecv( &ghostInNorth[0], NY, MPI_DOUBLE, idEast, counter, comm1D, &requestEast);
+        printf("%i start receiving west\n",my_rank);
+        MPI_Irecv( &ghostInWest[0], NY, MPI_DOUBLE, idWest, counter, comm1D, &requestWest);
+        printf("%i start receiving east\n",my_rank);
+        MPI_Irecv( &ghostInEast[0], NY, MPI_DOUBLE, idEast, counter, comm1D, &requestEast);
+
+        printf("%i passed receives\n",my_rank);
 
         // initiate send
         MPI_Send(&ghostOutNorth[0], NX,MPI_DOUBLE, idNorth, counter, comm1D);
@@ -166,11 +162,19 @@ int main(int argc, char* argv[]) {
         MPI_Send(&ghostOutWest[0], NY,MPI_DOUBLE, idWest, counter, comm1D);
         MPI_Send(&ghostOutEast[0], NY,MPI_DOUBLE, idEast, counter, comm1D);
 
+        
         // wait for receive
         MPI_Wait(&requestNorth,&statusNorth);
         MPI_Wait(&requestSouth,&statusSouth);
         MPI_Wait(&requestWest,&statusWest);
         MPI_Wait(&requestEast,&statusEast);
+        
+        
+
+        printf("%i passed waits\n",my_rank);
+
+        printf("proc %i; cnt %i; status north: ",my_rank,counter);
+        std::cout << statusNorth.MPI_ERROR << std::endl;
 
         // --- start jacobi-calculation
         // resolve neighbouring arrays into fullSize index position
@@ -179,6 +183,56 @@ int main(int argc, char* argv[]) {
         for(int i=0; i<NY;++i) ghostValues[i*NX] = (+1) * ghostInWest[i];
         for(int i=1; i<NY+1;++i) ghostValues[NX*i - 1] = (+1) * ghostInEast[i];
 
+        int precs = NX;
+
+        // actually calculate jacobi
+        // das sind andere i,j als in den grid-koordinaten (diese hier sind nur intern für berechnungen der Matrix)
+        for(int i=0; i<fullSize; i++){
+            double sum{0};
+            if(i==0)
+            {
+                sum +=  - solutionU[(counter+1)%2][1] 
+                        - solutionU[(counter+1)%2][precs];
+            }
+            else if(i>0 && i<precs)
+            {
+                sum +=  - solutionU[(counter+1)%2][i+precs];           
+                
+                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
+                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
+            }
+            else if(i>=precs && i<(UPP[my_rank]-precs))
+            {
+                sum +=  - solutionU[(counter+1)%2][i-precs]
+                        - solutionU[(counter+1)%2][i+precs];
+                
+                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
+                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
+            }
+            else if(i>=(UPP[my_rank]-precs) && i<UPP[my_rank]-1)
+            {
+                sum +=  - solutionU[(counter+1)%2][i-precs];
+                
+                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
+                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
+            }
+            else if(i==UPP[my_rank]-1)
+            {
+                sum +=  - solutionU[(counter+1)%2][UPP[my_rank]-2] 
+                        - solutionU[(counter+1)%2][UPP[my_rank]-1-precs];
+            }
+
+            /*
+            for(int j=0; j<fullSize; j++) {
+                if(i==j) continue;
+                sum += A_at(A,X,Y,i,j) * solutionU[(counter+1)%2][j];
+            }
+            */
+            //std::cout << ghostValues[i] << std::endl;
+            solutionU[counter%2][i] = (b[i] + ghostValues[i]*h*h - sum)/alpha;
+        }
+
+        /*
         // actually calculate jacobi
         // das sind andere i,j als in den grid-koordinaten (diese hier sind nur intern für berechnungen der Matrix)
         for(int i=0; i<fullSize; i++){
@@ -190,12 +244,15 @@ int main(int argc, char* argv[]) {
             //std::cout << ghostValues[i] << std::endl;
             solutionU[counter%2][i] = (b[i] + ghostValues[i]*h*h - sum)/A[i+fullSize*i];
         }
+        */
 
         //calc runtime
         procRuntime += std::chrono::steady_clock::now() - start;
     }
 
     //if(counter == iterations) std::cout << "problem with counter not being interations" << std::endl;
+
+
 
     // prepare output
     std::vector<double> finalSolution(fullSize);
@@ -209,25 +266,13 @@ int main(int argc, char* argv[]) {
     double meanRuntime = procRuntime.count()/(std::pow(10,9)*iterations*1.0);
 
 
-    /* things being passed on from my part:
-
-    fullSize = NX*NY (this is the length of solution and rhs vector)
-
-    finalSolution (of length fullSize) [afaik this is also the u that they want for everything else]
-    rhs (this is b + ghostValues)
-    meanRuntime
-
-    the way NX and NY are defined:
-    int NX = precs;
-    int NY = UPP[my_rank] / precs;
-
-    */
+    
 
 
 // PART STEFFI
 
-    std::vector <double> solution;                // initialise correct solution
-    solution = Initialize_up(solution, y_begin, precs, h, my_rank, proc);
+    std::vector <double> solution;            // initialise correct solution
+    solution = Initialize_up(solution, y_begin, precs, h, my_rank, procs);
 
     // Initializations
     std::vector <double> residual_elements(NX*NY, 0);
@@ -244,12 +289,7 @@ int main(int argc, char* argv[]) {
     double errorMax_proc = NormInf(error_elemets);
 
     //std::cout << my_rank << " : "<< errorMax_proc << std::endl;
-    if(my_rank == 6) matrix_printer(A, UPP[my_rank]);
-
-    //if(my_rank == 6 ){
-    //    std::cout << my_rank << " : "<< errorMax_proc << std::endl;
-    //    vector_printer(error_elemets);
-    //}
+    //if(my_rank == 6) matrix_printer(A, UPP[my_rank]);
 
     // Initialize for combining
     int root = 0;
@@ -280,7 +320,7 @@ int main(int argc, char* argv[]) {
     if(my_rank == 0){
 
         // Calculating NormL2 and Infinite Norm of Residual and Error
-        double mean_runtime = runtime_sum/proc;
+        double mean_runtime = runtime_sum/procs;
         auto residualNorm = sqrt(residualNorm_2);
         auto errorNorm = sqrt(errorNorm_2);
 
@@ -292,8 +332,10 @@ int main(int argc, char* argv[]) {
         std::cout << std::scientific << "average_runtime_per_iteration= " << mean_runtime << std::endl;
     
     }
+    
 
     MPI_Finalize();
-    return 0;
-}
 
+    
+
+}

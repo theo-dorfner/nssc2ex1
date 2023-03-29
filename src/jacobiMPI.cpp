@@ -82,20 +82,6 @@ int main(int argc, char* argv[]) {
     b = Initialize_b0(b, y_begin, precs, h, my_rank, proc);
     double alpha = 4 + 4 * M_PI * M_PI * h * h;
 
-    
-    //matrix_printer(A, UPP[my_rank]);
-
-    /*
-    cout << "Hello, my rank is " << my_rank << " and the number of unknowns are " << UPP[my_rank] << endl << endl;
-    cout << "This is my vector b: " << endl;
-    vector_printer(b);
-    cout <<"And this is my matrix A: " << endl;
-    
-    cout<<"Have a nice day :-) from rank "<<my_rank<<endl;
-    cout<<"--------------------------------------------"<<endl<<endl;
-    */
-
-
 
 
 // PART THEO
@@ -111,7 +97,7 @@ int main(int argc, char* argv[]) {
     std::vector<double> ghostInNorth(NX,0), ghostInSouth(NX,0); // are dimensional allocations correct here?
     std::vector<double> ghostOutNorth(NX,0), ghostOutSouth(NX,0);
     int idNorth, idSouth, procID{my_rank};
-    std::chrono::duration<double> procRuntime{0};
+    std::chrono::duration<double,std::nano> procRuntime{0};
     MPI_Request requestNorth;
     MPI_Request requestSouth;
     MPI_Status statusNorth;
@@ -128,7 +114,6 @@ int main(int argc, char* argv[]) {
     MPI_Cart_shift(comm1D, 1, +1, &procID, &idSouth); //vertical - south
 
     //for(auto &elem : collector)if(elem < 0)elem = &MPI_PROC_NULL;
-
     //std::cout << "on " << my_rank << " going north is " << idNorth << std::endl;
     //std::cout << "on " << my_rank << " going south is " << idSouth << std::endl;
     if(my_rank == 0){
@@ -223,7 +208,7 @@ int main(int argc, char* argv[]) {
         rhs[i] = b[i] + ghostValues[i]*h*h;
     }
     // calculate mean runtime in seconds
-    double meanRuntime = procRuntime.count()/(std::pow(10,9)*iterations*1.0);
+    double meanRuntime = procRuntime.count()/(iterations*1.0*std::pow(10,9));
 
 
     /* things being passed on from my part:
