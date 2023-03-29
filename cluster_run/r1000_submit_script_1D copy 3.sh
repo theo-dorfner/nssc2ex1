@@ -18,7 +18,7 @@ module load pmi/pmix-x86_64
 module load mpi/openmpi-x86_64
 
 ## start compilation (?should we compile before that? i.e. manually to catch errors)
-mpic++ -std=c++17 -O3 -Wall -pedantic -march=native -ffast-math ../src/jacobiMPI.cpp -o jacobiMPI
+mpic++ -std=c++17 -O3 -Wall -pedantic -march=native -ffast-math ../src/jacobi.cpp -o jacobi
 
 
 ## submitting jobs
@@ -30,7 +30,7 @@ srun hostname
 ## now this is the proper job
 ## ./jacobiMPI <resolution> <iterations>
 
-for n in {1,2,5,10,20,30,40}
+for n in {1,2,3,5,7,10,12,15,17,20,22,25,27,30,32,35,37,40}
 do
-    srun --mpi=pmix --ntasks=${n} ./jacobiMPI 250 30
+    srun --mpi=pmix --ntasks=${n} ./jacobi 1D 1000 30
 done
