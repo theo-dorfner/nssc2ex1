@@ -72,23 +72,15 @@ int main(int argc, char* argv[]) {
     h = H(resolution);
 
     //4. b and A and u initialization
-    int N = UPP[my_rank];
-    vector<double>A(N*N, 0);
-    vector<double>u(N, 0);
+    //int N = UPP[my_rank];
+    //vector<double>A(N*N, 0);
+    vector<double>u(UPP[my_rank], 0);
     vector<double>b;
 
     //std::cout << h << std::endl;
-    A = Initialize_A0(A, N, NX_rank[coord[1]], h);
+    //A = Initialize_A0(A, N, NX_rank[coord[1]], h);
+    double alpha = 4 + 4 * M_PI * M_PI * h * h; 
     b = Initialize_b0(b, coord[1], coord[0], x_begin, y_begin, h);
-
-    /*
-    //print function for every rank
-    if(my_rank==3){
-    std::cout << N << "   " << NX_rank[coord[1]] << std::endl;
-    //std::cout << "my_rank = " << my_rank << "; my coords: " << coord[0] << coord[1] << std::endl;
-    matrix_printer(A, N);
-    //vectorprinter_d(b);
-    }*/
 
 
 // PART THEO
@@ -113,6 +105,7 @@ int main(int argc, char* argv[]) {
     MPI_Status statusSouth;
     MPI_Status statusWest;
     MPI_Status statusEast;
+    
     //int* collector[2] = {&idNorth, &idSouth};
     int startSouth = (NY-1)*NX;
 
@@ -132,6 +125,7 @@ int main(int argc, char* argv[]) {
     //std::cout << "on " << my_rank << " going south is " << idSouth << std::endl;
     if(my_rank == 0)std::cout << printf("jacobiMPI | resolution: %i; iterations: %i; processes: %i",resolution,iterations,procs) << std::endl;
 
+    
     // start iterations
     for(int counter = 0; counter < iterations; ++counter){
         auto start = std::chrono::steady_clock::now(); // start runtime timing
@@ -155,11 +149,14 @@ int main(int argc, char* argv[]) {
         MPI_Send(&ghostOutWest[0], NY,MPI_DOUBLE, idWest, counter, comm1D);
         MPI_Send(&ghostOutEast[0], NY,MPI_DOUBLE, idEast, counter, comm1D);
 
+        
         // wait for receive
         MPI_Wait(&requestNorth,&statusNorth);
         MPI_Wait(&requestSouth,&statusSouth);
         MPI_Wait(&requestWest,&statusWest);
         MPI_Wait(&requestEast,&statusEast);
+        
+        
 
         // --- start jacobi-calculation
         // resolve neighbouring arrays into fullSize index position
@@ -168,6 +165,56 @@ int main(int argc, char* argv[]) {
         for(int i=0; i<NY;++i) ghostValues[i*NX] = (+1) * ghostInWest[i];
         for(int i=1; i<NY+1;++i) ghostValues[NX*i - 1] = (+1) * ghostInEast[i];
 
+        int precs = NX;
+
+        // actually calculate jacobi
+        // das sind andere i,j als in den grid-koordinaten (diese hier sind nur intern für berechnungen der Matrix)
+        for(int i=0; i<fullSize; i++){
+            double sum{0};
+            if(i==0)
+            {
+                sum +=  - solutionU[(counter+1)%2][1] 
+                        - solutionU[(counter+1)%2][precs];
+            }
+            else if(i>0 && i<precs)
+            {
+                sum +=  - solutionU[(counter+1)%2][i+precs];           
+                
+                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
+                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
+            }
+            else if(i>=precs && i<(UPP[my_rank]-precs))
+            {
+                sum +=  - solutionU[(counter+1)%2][i-precs]
+                        - solutionU[(counter+1)%2][i+precs];
+                
+                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
+                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
+            }
+            else if(i>=(UPP[my_rank]-precs) && i<UPP[my_rank]-1)
+            {
+                sum +=  - solutionU[(counter+1)%2][i-precs];
+                
+                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
+                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
+            }
+            else if(i==UPP[my_rank]-1)
+            {
+                sum +=  - solutionU[(counter+1)%2][UPP[my_rank]-2] 
+                        - solutionU[(counter+1)%2][UPP[my_rank]-1-precs];
+            }
+
+            /*
+            for(int j=0; j<fullSize; j++) {
+                if(i==j) continue;
+                sum += A_at(A,X,Y,i,j) * solutionU[(counter+1)%2][j];
+            }
+            */
+            //std::cout << ghostValues[i] << std::endl;
+            solutionU[counter%2][i] = (b[i] + ghostValues[i]*h*h - sum)/alpha;
+        }
+
+        /*
         // actually calculate jacobi
         // das sind andere i,j als in den grid-koordinaten (diese hier sind nur intern für berechnungen der Matrix)
         for(int i=0; i<fullSize; i++){
@@ -179,12 +226,15 @@ int main(int argc, char* argv[]) {
             //std::cout << ghostValues[i] << std::endl;
             solutionU[counter%2][i] = (b[i] + ghostValues[i]*h*h - sum)/A[i+fullSize*i];
         }
+        */
 
         //calc runtime
         procRuntime += std::chrono::steady_clock::now() - start;
     }
 
     //if(counter == iterations) std::cout << "problem with counter not being interations" << std::endl;
+
+
 
     // prepare output
     std::vector<double> finalSolution(fullSize);
@@ -221,12 +271,7 @@ int main(int argc, char* argv[]) {
     double errorMax_proc = NormInf(error_elemets);
 
     //std::cout << my_rank << " : "<< errorMax_proc << std::endl;
-    if(my_rank == 6) matrix_printer(A, UPP[my_rank]);
-
-    //if(my_rank == 6 ){
-    //    std::cout << my_rank << " : "<< errorMax_proc << std::endl;
-    //    vector_printer(error_elemets);
-    //}
+    //if(my_rank == 6) matrix_printer(A, UPP[my_rank]);
 
     // Initialize for combining
     int root = 0;

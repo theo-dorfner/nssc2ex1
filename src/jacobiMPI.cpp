@@ -114,7 +114,6 @@ int main(int argc, char* argv[]) {
     MPI_Cart_shift(comm1D, 1, +1, &procID, &idSouth); //vertical - south
 
     //for(auto &elem : collector)if(elem < 0)elem = &MPI_PROC_NULL;
-
     //std::cout << "on " << my_rank << " going north is " << idNorth << std::endl;
     //std::cout << "on " << my_rank << " going south is " << idSouth << std::endl;
     if(my_rank == 0){
