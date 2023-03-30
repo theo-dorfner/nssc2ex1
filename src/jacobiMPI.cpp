@@ -104,36 +104,29 @@ int main(int argc, char* argv[])
         double alpha = 4 + 4 * M_PI * M_PI * h * h;
 
         // PART THEO
-        // definition of matrix sice if unknown variables
+        // dimensions of FDM points to solve
         int NX = precs;
         int NY = UPP[my_rank] / precs;
 
         //variable declaration
-        const int fullSize = NX * NY;
-        std::vector<std::vector <double>> solutionU(2, std::vector<double>(fullSize,0));
-        std::vector<double> ghostValues(fullSize,0);
-        std::vector<double> ghostInNorth(NX,0), ghostInSouth(NX,0); // are dimensional allocations correct here?
-        std::vector<double> ghostOutNorth(NX,0), ghostOutSouth(NX,0);
+        const int fullSize = NX * NY;                                                       // overall length of unkowns
+        std::vector<std::vector <double>> solutionU(2, std::vector<double>(fullSize,0)); 
+        std::vector<double> ghostValues(fullSize,0);                                        // overall ghostVector used in the jacobi solver
+        std::vector<double> ghostInNorth(NX,0), ghostInSouth(NX,0);                         // vector for incoming ghost values
+        std::vector<double> ghostOutNorth(NX,0), ghostOutSouth(NX,0);                       // vector for outgoing ghost values
         int idNorth, idSouth, procID{my_rank};
         std::chrono::duration<double,std::nano> procRuntime{0};
         MPI_Request requestNorth;
         MPI_Request requestSouth;
         MPI_Status statusNorth;
         MPI_Status statusSouth;
-        //int* collector[2] = {&idNorth, &idSouth};
-        int startSouth = (NY-1)*NX;
+        int startSouth = (NY-1)*NX;                                                         // starting position of last (lowest) Row
 
-        //MPI_Cart_coords(comm1D, my_rank, 2, &coords);
-        //std::cout << procID << " " << coords << std::endl;
-    
         // collect neighbour IDs
-        //int MPI_Cart_shift(MPI_Comm comm_cart, int direction, int disp, int *rank_source, int *rank_dest)
-        MPI_Cart_shift(comm1D, 1, -1, &procID, &idNorth); //vertical - north
-        MPI_Cart_shift(comm1D, 1, +1, &procID, &idSouth); //vertical - south
+        MPI_Cart_shift(comm1D, 1, -1, &procID, &idNorth);
+        MPI_Cart_shift(comm1D, 1, +1, &procID, &idSouth);
 
-        //for(auto &elem : collector)if(elem < 0)elem = &MPI_PROC_NULL;
-        //std::cout << "on " << my_rank << " going north is " << idNorth << std::endl;
-        //std::cout << "on " << my_rank << " going south is " << idSouth << std::endl;
+        // give overview of code being run
         if(my_rank == 0){
             printf("jacobiMPI | resolution: %i; iterations: %i; dimension: %i; processes: %i",resolution,iterations,ndims,proc);
             std::cout << std::endl;
@@ -142,89 +135,82 @@ int main(int argc, char* argv[])
         
         // start iterations
         for(int counter = 0; counter < iterations; ++counter){
-            auto start = std::chrono::steady_clock::now(); // start runtime timing
+            auto start = std::chrono::steady_clock::now();                                              // start runtime timing
 
-        
-        // generate outgoing ghost layers
-        for(int i=0; i<NX;++i) ghostOutSouth[i] = solutionU[(counter+1)%2][startSouth + i];
-        for(int i=0; i<NX;++i) ghostOutNorth[i] = solutionU[(counter+1)%2][i];
+            
+            // generate outgoing ghost layers
+            for(int i=0; i<NX;++i) ghostOutSouth[i] = solutionU[(counter+1)%2][startSouth + i];
+            for(int i=0; i<NX;++i) ghostOutNorth[i] = solutionU[(counter+1)%2][i];
 
-        
-        // initiate non-blocking receive
-        //MPI_Irecv( buf, count, datatype, source, tag, comm, [OUT] &request_handle);
-        MPI_Irecv( &ghostInNorth[0], NX, MPI_DOUBLE, idNorth, counter, comm1D, &requestNorth);
-        MPI_Irecv( &ghostInSouth[0], NX, MPI_DOUBLE, idSouth, counter, comm1D, &requestSouth);
+            
+            // initiate non-blocking receive
+            MPI_Irecv( &ghostInNorth[0], NX, MPI_DOUBLE, idNorth, counter, comm1D, &requestNorth);
+            MPI_Irecv( &ghostInSouth[0], NX, MPI_DOUBLE, idSouth, counter, comm1D, &requestSouth);
 
-        // initiate send
-        MPI_Send(&ghostOutNorth[0], NX,MPI_DOUBLE, idNorth, counter, comm1D);
-        MPI_Send(&ghostOutSouth[0], NX,MPI_DOUBLE, idSouth, counter, comm1D);
+            // initiate send
+            MPI_Send(&ghostOutNorth[0], NX,MPI_DOUBLE, idNorth, counter, comm1D);
+            MPI_Send(&ghostOutSouth[0], NX,MPI_DOUBLE, idSouth, counter, comm1D);
 
-        // wait for receive
-        MPI_Wait(&requestNorth,&statusNorth);
-        MPI_Wait(&requestSouth,&statusSouth);
-        
+            // wait for receive to finish
+            MPI_Wait(&requestNorth,&statusNorth);
+            MPI_Wait(&requestSouth,&statusSouth);
+            
+            // start jacobi-calculation
+            // resolve neighbouring arrays into fullSize index position of ghostValues
+            for(int i=0; i<NX;++i) ghostValues[startSouth + i] = ghostInSouth[i];
+            for(int i=0; i<NX;++i) ghostValues[i] = ghostInNorth[i];
 
-        // --- start jacobi-calculation
-        // resolve neighbouring arrays into fullSize index position
-        for(int i=0; i<NX;++i) ghostValues[startSouth + i] = (+1) * ghostInSouth[i]; //need to clarify +1/-1 here
-        for(int i=0; i<NX;++i) ghostValues[i] = (+1) * ghostInNorth[i];
+            // actually calculate jacobi iteration
+            for(int i=0; i<fullSize; i++){
+                double sum{0};
+                if(i==0)
+                {
+                    sum +=  - solutionU[(counter+1)%2][1] 
+                            - solutionU[(counter+1)%2][precs];
+                }
+                else if(i>0 && i<precs)
+                {
+                    sum +=  - solutionU[(counter+1)%2][i+precs];           
+                    
+                    if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
+                    if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
+                }
+                else if(i>=precs && i<(UPP[my_rank]-precs))
+                {
+                    sum +=  - solutionU[(counter+1)%2][i-precs]
+                            - solutionU[(counter+1)%2][i+precs];
+                    
+                    if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
+                    if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
+                }
+                else if(i>=(UPP[my_rank]-precs) && i<UPP[my_rank]-1)
+                {
+                    sum +=  - solutionU[(counter+1)%2][i-precs];
+                    
+                    if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
+                    if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
+                }
+                else if(i==UPP[my_rank]-1)
+                {
+                    sum +=  - solutionU[(counter+1)%2][UPP[my_rank]-2] 
+                            - solutionU[(counter+1)%2][UPP[my_rank]-1-precs];
+                }
 
-        
-
-        // actually calculate jacobi
-        // das sind andere i,j als in den grid-koordinaten (diese hier sind nur intern für berechnungen der Matrix)
-        for(int i=0; i<fullSize; i++){
-            double sum{0};
-            if(i==0)
-            {
-                sum +=  - solutionU[(counter+1)%2][1] 
-                        - solutionU[(counter+1)%2][precs];
-            }
-            else if(i>0 && i<precs)
-            {
-                sum +=  - solutionU[(counter+1)%2][i+precs];           
-                
-                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
-                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
-            }
-            else if(i>=precs && i<(UPP[my_rank]-precs))
-            {
-                sum +=  - solutionU[(counter+1)%2][i-precs]
-                        - solutionU[(counter+1)%2][i+precs];
-                
-                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
-                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
-            }
-            else if(i>=(UPP[my_rank]-precs) && i<UPP[my_rank]-1)
-            {
-                sum +=  - solutionU[(counter+1)%2][i-precs];
-                
-                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
-                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
-            }
-            else if(i==UPP[my_rank]-1)
-            {
-                sum +=  - solutionU[(counter+1)%2][UPP[my_rank]-2] 
-                        - solutionU[(counter+1)%2][UPP[my_rank]-1-precs];
+                solutionU[counter%2][i] = (b[i] + ghostValues[i]*h*h - sum)/alpha;
             }
 
-            solutionU[counter%2][i] = (b[i] + ghostValues[i]*h*h - sum)/alpha;
+            // calculate runtime
+            procRuntime += std::chrono::steady_clock::now() - start;
         }
 
-        //calc runtime
-        procRuntime += std::chrono::steady_clock::now() - start;
-        }
-
-        //if(counter == iterations) std::cout << "problem with counter not being interations" << std::endl;
-
-        // prepare output
+        // prepare for result handover
         std::vector<double> finalSolution(fullSize);
         std::vector<double> rhs(fullSize);
         for(int i=0; i < fullSize; ++i){
-            finalSolution[i] = solutionU[iterations % 2][i];
-            //if(my_rank == 0) std::cout << finalSolution[i] << std::endl;
-            rhs[i] = b[i] + ghostValues[i]*h*h;
+            finalSolution[i] = solutionU[iterations % 2][i];        
+            rhs[i] = b[i] + ghostValues[i]*h*h;                         // this includes the ghost Values for a proper residual
         }
+
         // calculate mean runtime in seconds
         double meanRuntime = procRuntime.count()/(iterations*1.0*std::pow(10,9));
 
@@ -349,14 +335,11 @@ int main(int argc, char* argv[])
         
 
         // PART THEO
-        //printf("my rank: %i; my coords: %i %i; nx, ny: %i %i ; my unknowns: %i \n",my_rank,coord[0],coord[1],NX,NY,UPP);
-
-        
         //variable declaration
         std::vector<std::vector <double>> solutionU(2, std::vector<double>(UPP,0));
-        std::vector<double> ghostValues(UPP,0);
-        std::vector<double> ghostInNorth(NX*NY, 0), ghostInSouth(NX*NY, 0), ghostInWest(NX*NY, 0), ghostInEast(NX*NY, 0); // are dimensional allocations correct here?
-        std::vector<double> ghostOutNorth(NX*NY, 0), ghostOutSouth(NX*NY, 0), ghostOutWest(NX*NY, 0), ghostOutEast (NX*NY,0);
+        std::vector<double> ghostValues(UPP,0);                                                                                     // overall ghostVector used in the jacobi solver
+        std::vector<double> ghostInNorth(NX*NY, 0), ghostInSouth(NX*NY, 0), ghostInWest(NX*NY, 0), ghostInEast(NX*NY, 0);           // vector for incoming ghost values
+        std::vector<double> ghostOutNorth(NX*NY, 0), ghostOutSouth(NX*NY, 0), ghostOutWest(NX*NY, 0), ghostOutEast (NX*NY,0);       // vector for outgoing ghost values
         int idNorth, idSouth, idWest, idEast, procID{my_rank};
         std::chrono::duration<double,std::nano> procRuntime{0};
         MPI_Request requestNorth;
@@ -367,153 +350,102 @@ int main(int argc, char* argv[])
         MPI_Status statusSouth;
         MPI_Status statusWest;
         MPI_Status statusEast;
-    
-        
-        //int* collector[2] = {&idNorth, &idSouth};
-        int startSouth = (NY-1)*NX;
-
-        //MPI_Cart_coords(comm1D, my_rank, 2, &coords);
-        //std::cout << procID << " " << coords << std::endl;
-
+        int startSouth = (NY-1)*NX;                     // starting position of last (lowest) Row
         
         // collect neighbour IDs
-        //printf("%i started carting\n",my_rank);
-        //int MPI_Cart_shift(MPI_Comm comm_cart, int direction, int disp, int *rank_source, int *rank_dest)
-        MPI_Cart_shift(comm1D, 1, -1, &procID, &idNorth); //vertical - north
-        //printf("%i finished north %i\n",my_rank,idNorth);
-        MPI_Cart_shift(comm1D, 1, +1, &procID, &idSouth); //vertical - south
-        //printf("%i finished south %i\n",my_rank,idSouth);
-        MPI_Cart_shift(comm1D, 0, -1, &procID, &idWest); //horizontal - west
-        //printf("%i finished west %i\n",my_rank,idWest);
-        MPI_Cart_shift(comm1D, 0, +1, &procID, &idEast); //horizontal - east
-        //printf("%i finished east %i\n",my_rank,idEast);
-
-        //for(auto &elem : collector)if(elem < 0)elem = &MPI_PROC_NULL;
-
-        //std::cout << "on " << my_rank << " going north is " << idNorth << std::endl;
-        //std::cout << "on " << my_rank << " going south is " << idSouth << std::endl;
-        //if(my_rank == 0)std::cout << printf("jacobiMPI | resolution: %i; iterations: %i; processes: %i",resolution,iterations,proc) << std::endl;
-
+        MPI_Cart_shift(comm1D, 1, -1, &procID, &idNorth);
+        MPI_Cart_shift(comm1D, 1, +1, &procID, &idSouth);
+        MPI_Cart_shift(comm1D, 0, -1, &procID, &idWest);
+        MPI_Cart_shift(comm1D, 0, +1, &procID, &idEast);
         
         // start iterations
         for(int counter = 0; counter < iterations; ++counter){
-            auto start = std::chrono::steady_clock::now(); // start runtime timing
-        
-        
-        // generate outgoing ghost layers
-        for(int i=0; i<NX;++i) ghostOutSouth[i] = solutionU[(counter+1)%2][startSouth + i];
-        for(int i=0; i<NX;++i) ghostOutNorth[i] = solutionU[(counter+1)%2][i];
-        for(int i=0; i<NY;++i) ghostOutWest[i] = solutionU[(counter+1)%2][i*NX];
-        for(int i=1; i<NY+1;++i) ghostOutEast[i] = solutionU[(counter+1)%2][NX*i - 1];
-
-        //printf("%i starts receiving\n",my_rank);
-
-        // initiate non-blocking receive
-        //MPI_Irecv( buf, count, datatype, source, tag, comm, [OUT] &request_handle);
-        //printf("%i start receiving north\n",my_rank);
-        MPI_Irecv( &ghostInNorth[0], NX, MPI_DOUBLE, idNorth, counter, comm1D, &requestNorth); // still needs changing of comm1D
-        //printf("%i start receiving south\n",my_rank);
-        MPI_Irecv( &ghostInSouth[0], NX, MPI_DOUBLE, idSouth, counter, comm1D, &requestSouth);
-        //printf("%i start receiving west\n",my_rank);
-        MPI_Irecv( &ghostInWest[0], NY, MPI_DOUBLE, idWest, counter, comm1D, &requestWest);
-        //printf("%i start receiving east\n",my_rank);
-        MPI_Irecv( &ghostInEast[0], NY, MPI_DOUBLE, idEast, counter, comm1D, &requestEast);
-
-        //printf("%i passed receives\n",my_rank);
-
-        
-        // initiate send
-        MPI_Send(&ghostOutNorth[0], NX, MPI_DOUBLE, idNorth, counter, comm1D);
-        //printf("südgeistschicht ausgesandt %i\n", my_rank);
-        MPI_Send(&ghostOutSouth[0], NX, MPI_DOUBLE, idSouth, counter, comm1D);
-        //printf("nordgeistschicht ausgesandt %i\n", my_rank);
-        MPI_Send(&ghostOutWest[0], NY, MPI_DOUBLE, idWest, counter, comm1D);
-        //printf("westgeistschicht ausgesandt %i\n", my_rank);
-        MPI_Send(&ghostOutEast[0], NY, MPI_DOUBLE, idEast, counter, comm1D);
-        //printf("ostgeistschicht ausgesandt %i\n", my_rank);
-
-        
-        // wait for receive
-        MPI_Wait(&requestNorth,&statusNorth);
-        MPI_Wait(&requestSouth,&statusSouth);
-        MPI_Wait(&requestWest,&statusWest);
-        MPI_Wait(&requestEast,&statusEast);
-
-        
-
-        //printf("%i passed waits\n",my_rank);
-
-        //printf("proc %i; cnt %i; status north: ",my_rank,counter);
-        //std::cout << statusNorth.MPI_ERROR << std::endl;
-
-        // --- start jacobi-calculation
-        // resolve neighbouring arrays into fullSize index position
-        for(int i=0; i<NX;++i) ghostValues[startSouth + i] = (+1) * ghostInSouth[i]; //need to clarify +1/-1 here
-        for(int i=0; i<NX;++i) ghostValues[i] = (+1) * ghostInNorth[i];
-        for(int i=0; i<NY;++i) ghostValues[i*NX] = (+1) * ghostInWest[i];
-        for(int i=1; i<NY+1;++i) ghostValues[NX*i - 1] = (+1) * ghostInEast[i];
-
-        int precs = NX;
-
-        
-
-        // actually calculate jacobi
-        // das sind andere i,j als in den grid-koordinaten (diese hier sind nur intern für berechnungen der Matrix)
-        for(int i=0; i<UPP; i++){
-            double sum{0};
-            if(i==0)
-            {
-                sum +=  - solutionU[(counter+1)%2][1] 
-                        - solutionU[(counter+1)%2][precs];
-            }
-            else if(i>0 && i<precs)
-            {
-                sum +=  - solutionU[(counter+1)%2][i+precs];           
-                
-                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
-                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
-            }
-            else if(i>=precs && i<(UPP-precs))
-            {
-                sum +=  - solutionU[(counter+1)%2][i-precs]
-                        - solutionU[(counter+1)%2][i+precs];
-                
-                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
-                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
-            }
-            else if(i>=(UPP-precs) && i<UPP-1)
-            {
-                sum +=  - solutionU[(counter+1)%2][i-precs];
-                
-                if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
-                if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
-            }
-            else if(i==UPP-1)
-            {
-                sum +=  - solutionU[(counter+1)%2][UPP-2] 
-                        - solutionU[(counter+1)%2][UPP-1-precs];
-            }
+            auto start = std::chrono::steady_clock::now();                  // start runtime timing
             
-            //std::cout << ghostValues[i] << std::endl;
-            solutionU[counter%2][i] = (b[i] + ghostValues[i]*h*h - sum)/alpha;
+            
+            // generate outgoing ghost layers
+            for(int i=0; i<NX;++i) ghostOutSouth[i] = solutionU[(counter+1)%2][startSouth + i];
+            for(int i=0; i<NX;++i) ghostOutNorth[i] = solutionU[(counter+1)%2][i];
+            for(int i=0; i<NY;++i) ghostOutWest[i] = solutionU[(counter+1)%2][i*NX];
+            for(int i=1; i<NY+1;++i) ghostOutEast[i] = solutionU[(counter+1)%2][NX*i - 1];
+
+            // initiate non-blocking receive
+            MPI_Irecv( &ghostInNorth[0], NX, MPI_DOUBLE, idNorth, counter, comm1D, &requestNorth);
+            MPI_Irecv( &ghostInSouth[0], NX, MPI_DOUBLE, idSouth, counter, comm1D, &requestSouth);
+            MPI_Irecv( &ghostInWest[0], NY, MPI_DOUBLE, idWest, counter, comm1D, &requestWest);
+            MPI_Irecv( &ghostInEast[0], NY, MPI_DOUBLE, idEast, counter, comm1D, &requestEast);
+
+            // initiate send
+            MPI_Send(&ghostOutNorth[0], NX, MPI_DOUBLE, idNorth, counter, comm1D);
+            MPI_Send(&ghostOutSouth[0], NX, MPI_DOUBLE, idSouth, counter, comm1D);
+            MPI_Send(&ghostOutWest[0], NY, MPI_DOUBLE, idWest, counter, comm1D);
+            MPI_Send(&ghostOutEast[0], NY, MPI_DOUBLE, idEast, counter, comm1D);
+            
+            // wait for receive
+            MPI_Wait(&requestNorth,&statusNorth);
+            MPI_Wait(&requestSouth,&statusSouth);
+            MPI_Wait(&requestWest,&statusWest);
+            MPI_Wait(&requestEast,&statusEast);
+
+            // start jacobi-calculation
+            // resolve neighbouring arrays into fullSize index position
+            for(int i=0; i<NX;++i) ghostValues[startSouth + i] = (+1) * ghostInSouth[i];
+            for(int i=0; i<NX;++i) ghostValues[i] = (+1) * ghostInNorth[i];
+            for(int i=0; i<NY;++i) ghostValues[i*NX] = (+1) * ghostInWest[i];
+            for(int i=1; i<NY+1;++i) ghostValues[NX*i - 1] = (+1) * ghostInEast[i];
+
+            int precs = NX;
+            // actually calculate jacobi iteration
+            for(int i=0; i<UPP; i++){
+                double sum{0};
+                if(i==0)
+                {
+                    sum +=  - solutionU[(counter+1)%2][1] 
+                            - solutionU[(counter+1)%2][precs];
+                }
+                else if(i>0 && i<precs)
+                {
+                    sum +=  - solutionU[(counter+1)%2][i+precs];           
+                    
+                    if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
+                    if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
+                }
+                else if(i>=precs && i<(UPP-precs))
+                {
+                    sum +=  - solutionU[(counter+1)%2][i-precs]
+                            - solutionU[(counter+1)%2][i+precs];
+                    
+                    if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
+                    if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
+                }
+                else if(i>=(UPP-precs) && i<UPP-1)
+                {
+                    sum +=  - solutionU[(counter+1)%2][i-precs];
+                    
+                    if((i+1)%precs != 0)    sum += - solutionU[(counter+1)%2][i+1];
+                    if(i%precs != 0)        sum += - solutionU[(counter+1)%2][i-1];
+                }
+                else if(i==UPP-1)
+                {
+                    sum +=  - solutionU[(counter+1)%2][UPP-2] 
+                            - solutionU[(counter+1)%2][UPP-1-precs];
+                }
+                
+                solutionU[counter%2][i] = (b[i] + ghostValues[i]*h*h - sum)/alpha;
             }
 
-            //calc runtime
+            // calculate runtime
             procRuntime += std::chrono::steady_clock::now() - start;
-          
         } 
-        
-    
-        //if(counter == iterations) std::cout << "problem with counter not being interations" << std::endl;
 
-        // prepare output
+        // prepare for result handover
         std::vector<double> finalSolution(UPP,0);
         std::vector<double> rhs(UPP,0);
         for(int i=0; i < UPP; ++i){
             finalSolution[i] = solutionU[iterations % 2][i];
-            //if(my_rank == 0) std::cout << finalSolution[i] << std::endl;
-            rhs[i] = b[i] + ghostValues[i]*h*h;
+            rhs[i] = b[i] + ghostValues[i]*h*h;                 // this includes the ghost Values for a proper residual
         }
+
         // calculate mean runtime in seconds
         double meanRuntime = procRuntime.count()/(std::pow(10,9)*iterations*1.0);
 
