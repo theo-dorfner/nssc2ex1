@@ -1,1 +1,10 @@
 https://gist.github.com/helghareeb/03f51dbf9d3c200a16548b3c9db3b0bd
+
+
+1D - THEO
+In order to be able to run the iterations we must first retrieve the addresses of the neighbours, which can be done using MPI_Cart_Shift. Even for the 1D version we could technically use the 2D code, as missing neighbours just produce an address rank of -2, which terminates the respective communication when used as a target rank.
+During each iteration we start of by calculating the outgoing ghost-layer values from the results of the previous iteration. Then we initialize non-blocking receives to all neighbours, followed by blocking sends to all neighbours. Afterwards each process waits for the non-blocking receives to terminate, which allows it to then write the received ghostValues into one large ghostVector of the same size as the linear system. The jacobi iteration then cacluates the new solution vector, using the ghostVector on the right hand side. In order to avoid large vectors for high resolution (and because it produced errors when originally running) we don't implement a Matrix A anymore, but rather do the generation of the matrix elements directly when using them. Each iteration is timed.
+After finishing the iterations, each process calculates the mean runtime per iteration and prepars the solution, as well as the right hand side, for residual and error calculation.
+
+2D - Theo
+The code for doing the iterations in the case of 2D barely changed from the case of 1D. Theoretically it should be possible to simply use the 2D code for 1D executions. The reason for this is, that MPI just gives back a non-communicator (rank = -2) for non existing neighbours.
