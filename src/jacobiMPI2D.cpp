@@ -32,6 +32,7 @@ int main(int argc, char* argv[]) {
     int iterations = atoi(argv[3]);
 
     int precs = resolution - 2;
+    //cout << precs << endl;
     //int iterations = atoi(argv[3]);
 
     MPI_Comm_size(MPI_COMM_WORLD, &procs);
@@ -40,6 +41,7 @@ int main(int argc, char* argv[]) {
     //A.2 Cart Creation
     vector<int> DIV;
     DIV = BiggestDivisors(procs);
+    vectorprinter(DIV);
     
     //2D case
     int dim[2] = {DIV[0], DIV[1]};
@@ -81,6 +83,15 @@ int main(int argc, char* argv[]) {
     //A = Initialize_A0(A, N, NX_rank[coord[1]], h);
     double alpha = 4 + 4 * M_PI * M_PI * h * h; 
     b = Initialize_b0(b, coord[1], coord[0], x_begin, y_begin, h);
+
+    /*
+    cout << my_rank << endl;
+    cout << NX_rank[my_rank] << endl;
+    cout << NY_rank[my_rank] << endl;
+    cout << endl;
+    */
+
+
 
 
 // PART THEO
@@ -163,6 +174,7 @@ int main(int argc, char* argv[]) {
         MPI_Send(&ghostOutEast[0], NY,MPI_DOUBLE, idEast, counter, comm1D);
 
         
+        
         // wait for receive
         MPI_Wait(&requestNorth,&statusNorth);
         MPI_Wait(&requestSouth,&statusSouth);
@@ -227,7 +239,7 @@ int main(int argc, char* argv[]) {
                 if(i==j) continue;
                 sum += A_at(A,X,Y,i,j) * solutionU[(counter+1)%2][j];
             }
-            */
+            
             //std::cout << ghostValues[i] << std::endl;
             solutionU[counter%2][i] = (b[i] + ghostValues[i]*h*h - sum)/alpha;
         }
@@ -244,7 +256,7 @@ int main(int argc, char* argv[]) {
             //std::cout << ghostValues[i] << std::endl;
             solutionU[counter%2][i] = (b[i] + ghostValues[i]*h*h - sum)/A[i+fullSize*i];
         }
-        */
+        
 
         //calc runtime
         procRuntime += std::chrono::steady_clock::now() - start;
@@ -332,7 +344,9 @@ int main(int argc, char* argv[]) {
         std::cout << std::scientific << "average_runtime_per_iteration= " << mean_runtime << std::endl;
     
     }
-    
+
+    */
+        
 
     MPI_Finalize();
 

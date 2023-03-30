@@ -53,9 +53,6 @@ int main(int argc, char* argv[])
     if(dimension == "1D") 
     //1D case or 2D case
     {
-        //1D case
-        if(my_rank == 1) std::cout<<"This is the 1D case!"<<std::endl;
-        
         int ndims = 1;
         int dims[1];
         int wrap_around[1];
@@ -135,10 +132,6 @@ int main(int argc, char* argv[])
         //for(auto &elem : collector)if(elem < 0)elem = &MPI_PROC_NULL;
         //std::cout << "on " << my_rank << " going north is " << idNorth << std::endl;
         //std::cout << "on " << my_rank << " going south is " << idSouth << std::endl;
-        if(my_rank == 0){
-            printf("jacobiMPI | resolution: %i; iterations: %i; dimension: %i; processes: %i",resolution,iterations,ndims,proc);
-            std::cout << std::endl;
-        }
 
         
         // start iterations
@@ -282,13 +275,14 @@ int main(int argc, char* argv[])
             auto residualNorm = sqrt(residualNorm_2);
             auto errorNorm = sqrt(errorNorm_2);
 
+            if(my_rank == 0) std::cout << "jacobi 1D | resolution: " << resolution << " processes: " << proc << " iterations: " << iterations << std::endl;
+            std::cout << std::endl;
             // Output the result
             std::cout << std::scientific << "|residual|= " << residualNorm << std::endl;
             std::cout << std::scientific << "|residualMax|= " << residualMax << std::endl;
             std::cout << std::scientific << "|error|= " << errorNorm << std::endl;
             std::cout << std::scientific << "|errorMax|= " << errorMax << std::endl;
             std::cout << std::scientific << "average_runtime_per_iteration= " << mean_runtime << std::endl;
-            std::cout << "---" << std::endl;
 
         }
 
@@ -298,9 +292,6 @@ int main(int argc, char* argv[])
 
     else if(dimension == "2D")
     {
-        //2D case 
-        if(my_rank == 0) std::cout<<"This is the 2D case"<<std::endl;
-
         vector<int> DIV;
         DIV = BiggestDivisors(proc);
     
@@ -393,7 +384,7 @@ int main(int argc, char* argv[])
 
         //std::cout << "on " << my_rank << " going north is " << idNorth << std::endl;
         //std::cout << "on " << my_rank << " going south is " << idSouth << std::endl;
-        //if(my_rank == 0)std::cout << printf("jacobiMPI | resolution: %i; iterations: %i; processes: %i",resolution,iterations,proc) << std::endl;
+        
 
         
         // start iterations
@@ -583,8 +574,9 @@ int main(int argc, char* argv[])
         auto residualNorm = sqrt(residualNorm_2);
         auto errorNorm = sqrt(errorNorm_2);
 
-        // Output the result
+        if(my_rank == 0) std::cout << "jacobi 2D | resolution: " << resolution << " processes: " << proc << " iterations: " << iterations << std::endl;
         std::cout << std::endl;
+        // Output the result
         std::cout << std::scientific << "|residual|= " << residualNorm << std::endl;
         std::cout << std::scientific << "|residualMax|= " << residualMax << std::endl;
         std::cout << std::scientific << "|error|= " << errorNorm << std::endl;
