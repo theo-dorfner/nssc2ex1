@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
         int reorder;
         int ierr;
 
-        //A. MPI_Cart creation
+        //MPI_Cart creation
 
         dims[0] = 0;
 
@@ -74,9 +74,9 @@ int main(int argc, char* argv[])
         if(ierr != 0) printf("ERROR[%i] creating CART\n", ierr);
         //returns error if cart creation wasn't successful
 
-        //this is now done multiple times, but don't know how else to do it!
         std::vector<int>UPP;
-        UPP = UnknownsPerProc(UPP, precs, proc); //calculates how big dimensions of arrays are for each rank!
+        UPP = UnknownsPerProc(UPP, precs, proc); /
+        //calculates how big dimensions of arrays are for each rank!
         //Check if resolution high enough for PROCS
         if(precs < proc)
         {
@@ -84,24 +84,22 @@ int main(int argc, char* argv[])
             return 0;
         }
 
-        //B.1. Definition of Matrix A, vector u and vector b; size of arrays corresponds to UPP of the rank;
+        //Definition of Matrix A, vector u and vector b; size of arrays corresponds to UPP of the rank;
         std::vector<double>b;
         std::vector<double>u(UPP[my_rank],0);
         //starting value for vector u is all zero
 
-        //B.2. Helpfunctions for the Initialization of A and b;
+        // Helpfunctions for the Initialization of A and b;
         double h = H(resolution);
         //calculating h
         vector<int>y_begin;
         //vector for the initialization of b
         y_begin = UPPtoYBegin(UPP, precs, proc);
 
-        //B.3. Initialization of A and b;
-        //A = Initialize_A0(A, UPP[my_rank], precs, h);
+        // Initialization of A and b;
         b = Initialize_b0_1D(b, y_begin, precs, h, my_rank, proc);
         double alpha = 4 + 4 * M_PI * M_PI * h * h;
 
-        // PART THEO
         // definition of matrix sice if unknown variables
         int NX = precs;
         int NY = UPP[my_rank] / precs;
@@ -223,8 +221,6 @@ int main(int argc, char* argv[])
         double meanRuntime = procRuntime.count()/(iterations*1.0*std::pow(10,9));
 
 
-        // PART STEFFI
-
         std::vector <double> solution;                // initialise correct solution
         solution = Initialize_up_1D(solution, y_begin, precs, h, my_rank, proc);
 
@@ -308,6 +304,7 @@ int main(int argc, char* argv[])
         vector<int>N(2,0);
 
         N = N_init(coord[0],coord[1],DIV,precs);
+        //gives back NX and NY
 
         int NX = N[0];
         int NY = N[1];
@@ -322,9 +319,6 @@ int main(int argc, char* argv[])
         //gives back index, where block begins in y_direction
         double h;
 
-        //cout << "my_rank: " << my_rank << " coords: " << coord[0] << coord[1] << " NX: " << NX << " " << "NY: " << NY << endl; 
-        //cout << "my_rank: " << my_rank << " coords: " << coord[0] << coord[1] << " NX: " << NX_rank[x] << " " << "NY: " << NY_rank[y] << endl;
-
         NX_rank = N_DIST(DIV[0], precs);
         NY_rank = N_DIST(DIV[1], precs);
         x_begin = XBegin(NX_rank, precs);
@@ -338,10 +332,6 @@ int main(int argc, char* argv[])
 
         double alpha = 4 + 4 * M_PI * M_PI * h * h; 
         b = Initialize_b0_2D(b, coord[0], coord[1], x_begin, y_begin, h);
-        
-
-        // PART THEO
-        //printf("my rank: %i; my coords: %i %i; nx, ny: %i %i ; my unknowns: %i \n",my_rank,coord[0],coord[1],NX,NY,UPP);
 
         
         //variable declaration
@@ -508,12 +498,6 @@ int main(int argc, char* argv[])
         }
         // calculate mean runtime in seconds
         double meanRuntime = procRuntime.count()/(std::pow(10,9)*iterations*1.0);
-
-        
-
-        // PART STEFFI
-
-        
 
         std::vector <double> solution;            // initialise correct solution
         solution = Initialize_up_2D(solution, coord[1], coord[0], x_begin, y_begin, h);
