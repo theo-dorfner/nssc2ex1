@@ -10,7 +10,6 @@
 
 #include "../include/functions_2D.h"
 #include "../include/functions_sn.h"
-#include "../include/jacobi.hpp"
 
 
 int main(int argc, char* argv[])
