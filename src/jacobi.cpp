@@ -140,14 +140,17 @@ int main(int argc, char* argv[])
             std::cout << std::endl;
         }
 
+        
         // start iterations
         for(int counter = 0; counter < iterations; ++counter){
             auto start = std::chrono::steady_clock::now(); // start runtime timing
 
-            // generate outgoing ghost layers
+        
+        // generate outgoing ghost layers
         for(int i=0; i<NX;++i) ghostOutSouth[i] = solutionU[(counter+1)%2][startSouth + i];
         for(int i=0; i<NX;++i) ghostOutNorth[i] = solutionU[(counter+1)%2][i];
 
+        
         // initiate non-blocking receive
         //MPI_Irecv( buf, count, datatype, source, tag, comm, [OUT] &request_handle);
         MPI_Irecv( &ghostInNorth[0], NX, MPI_DOUBLE, idNorth, counter, comm1D, &requestNorth);
@@ -160,11 +163,14 @@ int main(int argc, char* argv[])
         // wait for receive
         MPI_Wait(&requestNorth,&statusNorth);
         MPI_Wait(&requestSouth,&statusSouth);
+        
 
         // --- start jacobi-calculation
         // resolve neighbouring arrays into fullSize index position
         for(int i=0; i<NX;++i) ghostValues[startSouth + i] = (+1) * ghostInSouth[i]; //need to clarify +1/-1 here
         for(int i=0; i<NX;++i) ghostValues[i] = (+1) * ghostInNorth[i];
+
+        
 
         // actually calculate jacobi
         // das sind andere i,j als in den grid-koordinaten (diese hier sind nur intern für berechnungen der Matrix)
@@ -227,7 +233,7 @@ int main(int argc, char* argv[])
         // PART STEFFI
 
         std::vector <double> solution;                // initialise correct solution
-        solution = Initialize_up(solution, y_begin, precs, h, my_rank, proc);
+        solution = Initialize_up_1D(solution, y_begin, precs, h, my_rank, proc);
 
         // Initializations
         std::vector <double> residual_elements(NX*NY, 0);
@@ -308,6 +314,12 @@ int main(int argc, char* argv[])
         MPI_Cart_coords(comm1D, my_rank, 2, coord);
     
         //3. Calculation of support functions
+        vector<int>N(2,0);
+
+        N = N_init(coord[0],coord[1],DIV,precs);
+
+        int NX = N[0];
+        int NY = N[1];
 
         vector<int>NX_rank;
         //every dimension of each block in x direction
@@ -319,39 +331,33 @@ int main(int argc, char* argv[])
         //gives back index, where block begins in y_direction
         double h;
 
-        NX_rank = N_DIST(DIV[0], precs); 
+        //cout << "my_rank: " << my_rank << " coords: " << coord[0] << coord[1] << " NX: " << NX << " " << "NY: " << NY << endl; 
+        //cout << "my_rank: " << my_rank << " coords: " << coord[0] << coord[1] << " NX: " << NX_rank[x] << " " << "NY: " << NY_rank[y] << endl;
+
+        NX_rank = N_DIST(DIV[0], precs);
         NY_rank = N_DIST(DIV[1], precs);
         x_begin = XBegin(NX_rank, precs);
         y_begin = YBegin(NY_rank, precs);
-        int UPP = NX_rank[coord[1]] * NY_rank[coord[0]];
+
+
+        int UPP = NX * NY;
         h = H(resolution); 
 
-        /*
-        if(my_rank==1)
-        {
-            vectorprinter(NX_rank);
-            vectorprinter(NY_rank);
-            std::cout<<coord[0]<<" "<<coord[1]<<endl;
-        }*/
-
-        //std::cout<<my_rank<<" "<<NX_rank[coord[1]]<<NY_rank[coord[0]]<<" "<<UPP<<std::endl;
-        vector<double>b;
+        vector<double>b(UPP, 0);
 
         double alpha = 4 + 4 * M_PI * M_PI * h * h; 
-        b = Initialize_b0_2D(b, coord[1], coord[0], x_begin, y_begin, h);
+        b = Initialize_b0_2D(b, coord[0], coord[1], x_begin, y_begin, h);
+        
 
         // PART THEO
-        // definition of matrix sice if unknown variables
-        int NX = NX_rank[coord[1]];
-        int NY = NY_rank[coord[0]];
-        nprintf("my rank: %i; my coords: %i %i; nx, ny: %i %i ; my unknowns: %i \n",my_rank,coord[0],coord[1],NX,NY,UPP);
+        //printf("my rank: %i; my coords: %i %i; nx, ny: %i %i ; my unknowns: %i \n",my_rank,coord[0],coord[1],NX,NY,UPP);
 
         
         //variable declaration
         std::vector<std::vector <double>> solutionU(2, std::vector<double>(UPP,0));
         std::vector<double> ghostValues(UPP,0);
-        std::vector<double> ghostInNorth(NX,0), ghostInSouth(NX,0), ghostInWest(NY,0), ghostInEast(NY,0); // are dimensional allocations correct here?
-        std::vector<double> ghostOutNorth(NX,0), ghostOutSouth(NX,0), ghostOutWest(NY,0), ghostOutEast(NY,0);
+        std::vector<double> ghostInNorth(NX*NY, 0), ghostInSouth(NX*NY, 0), ghostInWest(NX*NY, 0), ghostInEast(NX*NY, 0); // are dimensional allocations correct here?
+        std::vector<double> ghostOutNorth(NX*NY, 0), ghostOutSouth(NX*NY, 0), ghostOutWest(NX*NY, 0), ghostOutEast (NX*NY,0);
         int idNorth, idSouth, idWest, idEast, procID{my_rank};
         std::chrono::duration<double> procRuntime{0};
         MPI_Request requestNorth;
@@ -387,7 +393,7 @@ int main(int argc, char* argv[])
 
         //std::cout << "on " << my_rank << " going north is " << idNorth << std::endl;
         //std::cout << "on " << my_rank << " going south is " << idSouth << std::endl;
-        if(my_rank == 0)std::cout << printf("jacobiMPI | resolution: %i; iterations: %i; processes: %i",resolution,iterations,proc) << std::endl;
+        //if(my_rank == 0)std::cout << printf("jacobiMPI | resolution: %i; iterations: %i; processes: %i",resolution,iterations,proc) << std::endl;
 
         
         // start iterations
@@ -418,10 +424,14 @@ int main(int argc, char* argv[])
 
         
         // initiate send
-        MPI_Send(&ghostOutNorth[0], NX,MPI_DOUBLE, idNorth, counter, comm1D);
-        MPI_Send(&ghostOutSouth[0], NX,MPI_DOUBLE, idSouth, counter, comm1D);
-        MPI_Send(&ghostOutWest[0], NY,MPI_DOUBLE, idWest, counter, comm1D);
-        MPI_Send(&ghostOutEast[0], NY,MPI_DOUBLE, idEast, counter, comm1D);
+        MPI_Send(&ghostOutNorth[0], NX, MPI_DOUBLE, idNorth, counter, comm1D);
+        //printf("südgeistschicht ausgesandt %i\n", my_rank);
+        MPI_Send(&ghostOutSouth[0], NX, MPI_DOUBLE, idSouth, counter, comm1D);
+        //printf("nordgeistschicht ausgesandt %i\n", my_rank);
+        MPI_Send(&ghostOutWest[0], NY, MPI_DOUBLE, idWest, counter, comm1D);
+        //printf("westgeistschicht ausgesandt %i\n", my_rank);
+        MPI_Send(&ghostOutEast[0], NY, MPI_DOUBLE, idEast, counter, comm1D);
+        //printf("ostgeistschicht ausgesandt %i\n", my_rank);
 
         
         // wait for receive
@@ -429,6 +439,7 @@ int main(int argc, char* argv[])
         MPI_Wait(&requestSouth,&statusSouth);
         MPI_Wait(&requestWest,&statusWest);
         MPI_Wait(&requestEast,&statusEast);
+
         
 
         //printf("%i passed waits\n",my_rank);
@@ -514,7 +525,7 @@ int main(int argc, char* argv[])
         
 
         std::vector <double> solution;            // initialise correct solution
-        solution = Initialize_up(solution, y_begin, precs, h, my_rank, proc);
+        solution = Initialize_up_2D(solution, coord[1], coord[0], x_begin, y_begin, h);
 
         
 
@@ -525,7 +536,7 @@ int main(int argc, char* argv[])
         
         // Calculate Residual and Error
         residual_elements = Residual_Calc(NX, NY, resolution, finalSolution, rhs);
-        //error_elemets = Error_Calc(UPP, finalSolution, solution); ATTENTION!
+        error_elemets = Error_Calc(UPP, finalSolution, solution); 
 
         // Clculating Error and Residual Norm per Process
         double residualNorm_proc = NormL2_2(residual_elements);
@@ -570,14 +581,14 @@ int main(int argc, char* argv[])
         // Calculating NormL2 and Infinite Norm of Residual and Error
         double mean_runtime = runtime_sum/proc;
         auto residualNorm = sqrt(residualNorm_2);
-        //auto errorNorm = sqrt(errorNorm_2);
+        auto errorNorm = sqrt(errorNorm_2);
 
         // Output the result
         std::cout << std::endl;
         std::cout << std::scientific << "|residual|= " << residualNorm << std::endl;
         std::cout << std::scientific << "|residualMax|= " << residualMax << std::endl;
-        //std::cout << std::scientific << "|error|= " << errorNorm << std::endl;
-        //std::cout << std::scientific << "|errorMax|= " << errorMax << std::endl;
+        std::cout << std::scientific << "|error|= " << errorNorm << std::endl;
+        std::cout << std::scientific << "|errorMax|= " << errorMax << std::endl;
         std::cout << std::scientific << "average_runtime_per_iteration= " << mean_runtime << std::endl;
 
         

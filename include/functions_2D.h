@@ -245,11 +245,11 @@ vector<double>Initialize_b0_2D(vector<double>b, int x_coord, int y_coord, vector
     {
         if(abs(Y[k] - (1-h)) < 1e-5)
         {
-            b.push_back(f(X[k], Y[k])*h*h + BC(X[k]));   //u_p including the BC
+            b[k] = (f(X[k], Y[k])*h*h + BC(X[k]));   //u_p including the BC
         }
         else
         {
-            b.push_back(f(X[k], Y[k])*h*h); //only u_p without BC
+            b[k] = (f(X[k], Y[k])*h*h); //only u_p without BC
         }
     }
         
@@ -261,22 +261,70 @@ double u_p(double X, double Y)
     return sin(2 * M_PI * X) * sinh(2 * M_PI * Y);
 } 
 
-vector<double>Initialize_up(vector<double>b, vector<int>Y_begin, int prec, double h, int my_rank, int proc)
+vector<double>Initialize_up_1D(vector<double>b, vector<int>Y_begin, int prec, double h, int my_rank, int proc)
 {
-    double X;
-    double Y;
-
     for(int j=Y_begin[my_rank]; j<Y_begin[my_rank+1]; j++) //die Y-Koordinate lauft werte bis zum naechsten rank durch
     {
         for(int i=1; i<prec+1; i++)
         {
-            X = i*h;
-            Y = j*h;
-            b.push_back(u_p(X, Y)); 
+            b.push_back(u_p(i*h, j*h)); 
         }
     }
 
     return b;
 }
 
+vector<double>Initialize_up_2D(vector<double>b, int x_coord, int y_coord, vector<int>x_begin, vector<int> y_begin, double h)
+{
+    
+    for(int j=y_begin[y_coord]; j<y_begin[y_coord+1]; j++) //die Y-Koordinate lauft werte bis zum naechsten rank durch
+    {
+        for(int i=x_begin[x_coord]; i<x_begin[x_coord+1]; i++)
+        {
+            b.push_back(f(i*h, j*h));
+        }
+    }
 
+    return b;
+}
+
+vector<int> N_init(int x_coordinate, int y_coordinate, vector<int>DIV, int precs)
+{
+    vector<int>NXY(2,0);
+    
+    int minx = precs/DIV[0]; //its integer divided by integer, so its like floor
+    int restx = precs%DIV[0];
+
+    vector<int>NX(DIV[0],0);
+
+    for(int i=0; i<DIV[0]; i++)
+    {
+        NX[i] = minx;
+    }
+    
+    for(int i=0; i<restx; i++)
+    {
+        NX[i]++;    
+    }
+
+
+    int miny = precs/DIV[1]; //its integer divided by integer, so its like floor
+    int resty = precs%DIV[1];
+
+    vector<int>NY(DIV[1],0);
+
+    for(int i=0; i<DIV[1]; i++)
+    {
+        NY[i] = miny;
+    }
+    
+    for(int i=0; i<resty; i++)
+    {
+        NY[i]++;    
+    }
+
+    NXY[0] = NX[x_coordinate];
+    NXY[1] = NY[y_coordinate];
+
+    return NXY;
+}

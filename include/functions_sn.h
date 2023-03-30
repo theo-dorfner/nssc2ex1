@@ -31,13 +31,14 @@ std::vector <double> Residual_Calc( int NX, int NY, int resolution,
 }
 
 
-std::vector <double> Error_Calc(int NX, int NY,
+std::vector <double> Error_Calc(int UPP,
     std::vector <double> &u, std::vector <double> &solution)
 {   
-    std::vector <double> error_elemets(NX*NY, 0);  // Initialization
+    std::vector <double> error_elemets(UPP, 0);  // Initialization
 
-    for(int i = 0; i < NX*NY; ++i)
-    {error_elemets[i] = std::abs(u[i]-solution[i]);     // Loop to calculate error
+    for(int i = 0; i < UPP; ++i)
+    {
+      error_elemets[i] = std::abs(u[i]-solution[i]);     // Loop to calculate error
     }
     return error_elemets;
 
