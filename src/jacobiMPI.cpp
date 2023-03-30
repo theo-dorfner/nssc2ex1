@@ -358,7 +358,7 @@ int main(int argc, char* argv[])
         std::vector<double> ghostInNorth(NX*NY, 0), ghostInSouth(NX*NY, 0), ghostInWest(NX*NY, 0), ghostInEast(NX*NY, 0); // are dimensional allocations correct here?
         std::vector<double> ghostOutNorth(NX*NY, 0), ghostOutSouth(NX*NY, 0), ghostOutWest(NX*NY, 0), ghostOutEast (NX*NY,0);
         int idNorth, idSouth, idWest, idEast, procID{my_rank};
-        std::chrono::duration<double> procRuntime{0};
+        std::chrono::duration<double,std::nano> procRuntime{0};
         MPI_Request requestNorth;
         MPI_Request requestSouth;
         MPI_Request requestWest;
