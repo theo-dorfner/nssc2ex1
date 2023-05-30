@@ -1,0 +1,3 @@
+/home/stefanie/Documents/CSE/NSSC2/nssc2ex1/CMakeFiles/mpiJacobi.dir
+/home/stefanie/Documents/CSE/NSSC2/nssc2ex1/CMakeFiles/edit_cache.dir
+/home/stefanie/Documents/CSE/NSSC2/nssc2ex1/CMakeFiles/rebuild_cache.dir

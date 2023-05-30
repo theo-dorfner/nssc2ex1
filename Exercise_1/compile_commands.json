@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/stefanie/Documents/CSE/NSSC2/nssc2ex1",
+  "command": "/usr/bin/c++  -I/home/stefanie/Documents/CSE/NSSC2/nssc2ex1/include  -o CMakeFiles/mpiJacobi.dir/src/jacobiMPI.cpp.o -c /home/stefanie/Documents/CSE/NSSC2/nssc2ex1/src/jacobiMPI.cpp",
+  "file": "/home/stefanie/Documents/CSE/NSSC2/nssc2ex1/src/jacobiMPI.cpp"
+}
+]

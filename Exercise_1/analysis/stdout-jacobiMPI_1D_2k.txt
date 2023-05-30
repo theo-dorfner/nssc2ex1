@@ -1,0 +1,49 @@
+jacobiMPI | resolution: 2000; iterations: 30; dimension: 1; processes: 1
+|residual|= 5.917933e+02
+|residualMax|= 8.656445e+00
+|error|= 1.053039e+05
+|errorMax|= 2.576116e+02
+average_runtime_per_iteration= 2.174816e-02
+---
+jacobiMPI | resolution: 2000; iterations: 30; dimension: 1; processes: 2
+|residual|= 5.917933e+02
+|residualMax|= 8.656445e+00
+|error|= 1.053039e+05
+|errorMax|= 2.576116e+02
+average_runtime_per_iteration= 1.101274e-02
+---
+jacobiMPI | resolution: 2000; iterations: 30; dimension: 1; processes: 5
+|residual|= 5.917933e+02
+|residualMax|= 8.656445e+00
+|error|= 1.053039e+05
+|errorMax|= 2.576116e+02
+average_runtime_per_iteration= 4.800274e-03
+---
+jacobiMPI | resolution: 2000; iterations: 30; dimension: 1; processes: 10
+|residual|= 5.917933e+02
+|residualMax|= 8.656445e+00
+|error|= 1.053040e+05
+|errorMax|= 2.576116e+02
+average_runtime_per_iteration= 3.637554e-03
+---
+jacobiMPI | resolution: 2000; iterations: 30; dimension: 1; processes: 20
+|residual|= 5.917933e+02
+|residualMax|= 8.656445e+00
+|error|= 1.053041e+05
+|errorMax|= 2.576116e+02
+average_runtime_per_iteration= 1.338290e-03
+---
+jacobiMPI | resolution: 2000; iterations: 30; dimension: 1; processes: 30
+|residual|= 5.917932e+02
+|residualMax|= 8.656445e+00
+|error|= 1.053042e+05
+|errorMax|= 2.576116e+02
+average_runtime_per_iteration= 1.572620e-03
+---
+jacobiMPI | resolution: 2000; iterations: 30; dimension: 1; processes: 40
+|residual|= 5.917932e+02
+|residualMax|= 8.656445e+00
+|error|= 1.053043e+05
+|errorMax|= 2.576116e+02
+average_runtime_per_iteration= 1.376200e-03
+---

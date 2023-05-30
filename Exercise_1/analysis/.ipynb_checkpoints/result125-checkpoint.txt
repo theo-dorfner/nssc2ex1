@@ -1,0 +1,126 @@
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 1
+|residual|= 1.501593e+02
+|residualMax|= 8.686535e+00
+|error|= 5.165510e+03
+|errorMax|= 1.668241e+02
+average_runtime_per_iteration= 8.870327e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 2
+|residual|= 1.501578e+02
+|residualMax|= 8.686535e+00
+|error|= 5.165604e+03
+|errorMax|= 1.668241e+02
+average_runtime_per_iteration= 5.024250e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 3
+|residual|= 1.501483e+02
+|residualMax|= 8.686535e+00
+|error|= 5.166242e+03
+|errorMax|= 1.668241e+02
+average_runtime_per_iteration= 3.406807e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 5
+|residual|= 1.500930e+02
+|residualMax|= 8.686535e+00
+|error|= 5.169936e+03
+|errorMax|= 1.668241e+02
+average_runtime_per_iteration= 2.356964e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 7
+|residual|= 1.499769e+02
+|residualMax|= 8.686480e+00
+|error|= 5.175495e+03
+|errorMax|= 1.668251e+02
+average_runtime_per_iteration= 1.963281e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 10
+|residual|= 1.492293e+02
+|residualMax|= 8.680215e+00
+|error|= 5.185216e+03
+|errorMax|= 1.669161e+02
+average_runtime_per_iteration= 2.204175e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 12
+|residual|= 1.476606e+02
+|residualMax|= 8.660064e+00
+|error|= 5.195164e+03
+|errorMax|= 1.672136e+02
+average_runtime_per_iteration= 1.955097e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 15
+|residual|= 1.403300e+02
+|residualMax|= 8.542789e+00
+|error|= 5.224457e+03
+|errorMax|= 1.700435e+02
+average_runtime_per_iteration= 1.613300e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 17
+|residual|= 1.297790e+02
+|residualMax|= 8.223842e+00
+|error|= 5.258965e+03
+|errorMax|= 1.774775e+02
+average_runtime_per_iteration= 1.625633e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 20
+|residual|= 1.103106e+02
+|residualMax|= 7.356255e+00
+|error|= 5.319353e+03
+|errorMax|= 1.867396e+02
+average_runtime_per_iteration= 1.179121e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 22
+|residual|= 7.971038e+01
+|residualMax|= 5.843416e+00
+|error|= 5.417401e+03
+|errorMax|= 1.965191e+02
+average_runtime_per_iteration= 1.468030e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 25
+|residual|= 4.154207e+01
+|residualMax|= 3.171823e+00
+|error|= 5.556846e+03
+|errorMax|= 2.068644e+02
+average_runtime_per_iteration= 1.375024e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 27
+|residual|= 4.152368e+01
+|residualMax|= 3.171823e+00
+|error|= 5.562276e+03
+|errorMax|= 2.068644e+02
+average_runtime_per_iteration= 1.345511e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 30
+|residual|= 4.152336e+01
+|residualMax|= 3.171823e+00
+|error|= 5.562371e+03
+|errorMax|= 2.068644e+02
+average_runtime_per_iteration= 1.405204e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 32
+|residual|= 1.034653e+01
+|residualMax|= 9.284134e-01
+|error|= 5.749712e+03
+|errorMax|= 2.178198e+02
+average_runtime_per_iteration= 1.335414e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 35
+|residual|= 1.033947e+01
+|residualMax|= 9.284134e-01
+|error|= 5.752465e+03
+|errorMax|= 2.178198e+02
+average_runtime_per_iteration= 1.494856e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 37
+|residual|= 1.033930e+01
+|residualMax|= 9.284134e-01
+|error|= 5.752532e+03
+|errorMax|= 2.178198e+02
+average_runtime_per_iteration= 1.493133e-05
+---
+jacobiMPI 1D | resolution: 125; iterations: 30; dimension: 1; processes: 40
+|residual|= 1.033928e+01
+|residualMax|= 9.284134e-01
+|error|= 5.752538e+03
+|errorMax|= 2.178198e+02
+average_runtime_per_iteration= 1.445083e-05
+---

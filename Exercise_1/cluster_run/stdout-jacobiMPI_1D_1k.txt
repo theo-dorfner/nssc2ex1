@@ -1,0 +1,89 @@
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+tcad38.iue.tuwien.ac.at
+jacobiMPI | resolution: 1000; iterations: 30; dimension: 1; processes: 1
+|residual|= 4.185323e+02
+|residualMax|= 8.658001e+00
+|error|= 5.189697e+04
+|errorMax|= 2.490387e+02
+average_runtime_per_iteration= 5.440293e-03
+---
+jacobiMPI | resolution: 1000; iterations: 30; dimension: 1; processes: 2
+|residual|= 4.185323e+02
+|residualMax|= 8.658001e+00
+|error|= 5.189697e+04
+|errorMax|= 2.490387e+02
+average_runtime_per_iteration= 2.801073e-03
+---
+jacobiMPI | resolution: 1000; iterations: 30; dimension: 1; processes: 5
+|residual|= 4.185323e+02
+|residualMax|= 8.658001e+00
+|error|= 5.189702e+04
+|errorMax|= 2.490387e+02
+average_runtime_per_iteration= 1.214754e-03
+---
+jacobiMPI | resolution: 1000; iterations: 30; dimension: 1; processes: 10
+|residual|= 4.185321e+02
+|residualMax|= 8.658001e+00
+|error|= 5.189721e+04
+|errorMax|= 2.490387e+02
+average_runtime_per_iteration= 1.140267e-03
+---
+jacobiMPI | resolution: 1000; iterations: 30; dimension: 1; processes: 20
+|residual|= 4.185318e+02
+|residualMax|= 8.658001e+00
+|error|= 5.189768e+04
+|errorMax|= 2.490387e+02
+average_runtime_per_iteration= 3.149453e-04
+---
+jacobiMPI | resolution: 1000; iterations: 30; dimension: 1; processes: 30
+|residual|= 4.185314e+02
+|residualMax|= 8.658001e+00
+|error|= 5.189815e+04
+|errorMax|= 2.490387e+02
+average_runtime_per_iteration= 3.874988e-04
+---
+jacobiMPI | resolution: 1000; iterations: 30; dimension: 1; processes: 40
+|residual|= 4.185309e+02
+|residualMax|= 8.658001e+00
+|error|= 5.189865e+04
+|errorMax|= 2.490387e+02
+average_runtime_per_iteration= 3.010530e-04
+---
